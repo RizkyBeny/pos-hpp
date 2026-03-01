@@ -3,6 +3,10 @@
 import React, { useState } from 'react';
 import { LucidePlus, LucideTrash2, LucideEdit2, LucideSave, LucideX, LucideSearch, LucideArrowRight } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import StockBadge from '../inventory/StockBadge';
+import StockOnboardingBanner from '../inventory/StockOnboardingBanner';
+import StockInitWizard from '../inventory/StockInitWizard';
+import RestockModal from '../inventory/RestockModal';
 
 export type Unit = 'kg' | 'gr' | 'L' | 'ml' | 'pcs' | 'pack' | 'lusin';
 
@@ -12,7 +16,10 @@ export interface Ingredient {
     buyPrice: number;
     buyUnit: Unit;
     buyQuantity: number;
-    weightPerUnit?: number; // Weight/Volume in gr/ml per piece/pack
+    weightPerUnit?: number;
+    stock_quantity: number | null;
+    stock_unit: string | null;
+    min_stock_alert: number | null;
 }
 
 export const UNIT_OPTIONS: Unit[] = ['kg', 'gr', 'L', 'ml', 'pcs', 'pack', 'lusin'];
@@ -39,9 +46,14 @@ export default function IngredientManager({
         buyUnit: 'kg',
         buyQuantity: 1,
         weightPerUnit: 0,
+        stock_quantity: null,
+        stock_unit: 'gr',
+        min_stock_alert: null,
     });
     const [statusMsg, setStatusMsg] = useState<{ type: 'error' | 'success', text: string } | null>(null);
     const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+    const [showWizard, setShowWizard] = useState(false);
+    const [restockIngredient, setRestockIngredient] = useState<Ingredient | null>(null);
 
     const handleAdd = async () => {
         setStatusMsg(null);
@@ -65,24 +77,46 @@ export default function IngredientManager({
                 const newIngredients = [...ingredients, newIng];
                 setIngredients(newIngredients);
                 onIngredientsChange?.(newIngredients);
-                setFormData({ name: '', buyPrice: 0, buyUnit: 'kg', buyQuantity: 1, weightPerUnit: 0 });
+                setFormData({
+                    name: '', buyPrice: 0, buyUnit: 'kg', buyQuantity: 1, weightPerUnit: 0,
+                    stock_quantity: null, stock_unit: 'gr', min_stock_alert: null
+                });
                 setIsAdding(false);
                 setStatusMsg({ type: 'success', text: 'Bahan baku berhasil ditambahkan (Demo).' });
                 setTimeout(() => setStatusMsg(null), 3000);
                 return;
             }
 
-            const { data, error } = await supabase
+            // Try full insert first
+            let insertResult = await supabase
                 .from('ingredients')
                 .insert([{
                     name: formData.name.trim(),
                     buy_price: formData.buyPrice,
                     buy_quantity: formData.buyQuantity,
                     buy_unit: formData.buyUnit,
-                    weight_per_unit: formData.weightPerUnit
+                    weight_per_unit: formData.weightPerUnit,
+                    stock_quantity: formData.stock_quantity,
+                    stock_unit: formData.stock_unit,
+                    min_stock_alert: formData.min_stock_alert
                 }])
                 .select();
 
+            // If columns are missing (stale schema cache), retry with minimal required fields only
+            if (insertResult.error && insertResult.error.code === 'PGRST204') {
+                console.warn('Some columns missing from schema cache, retrying with minimal fields...');
+                insertResult = await supabase
+                    .from('ingredients')
+                    .insert([{
+                        name: formData.name.trim(),
+                        buy_price: formData.buyPrice,
+                        buy_quantity: formData.buyQuantity,
+                        buy_unit: formData.buyUnit,
+                    }])
+                    .select();
+            }
+
+            const { data, error } = insertResult;
             if (error) throw error;
 
             if (data) {
@@ -92,19 +126,26 @@ export default function IngredientManager({
                     buyPrice: Number(data[0].buy_price),
                     buyQuantity: Number(data[0].buy_quantity),
                     buyUnit: data[0].buy_unit,
-                    weightPerUnit: Number(data[0].weight_per_unit)
+                    weightPerUnit: Number(data[0].weight_per_unit || 0),
+                    stock_quantity: data[0].stock_quantity !== undefined && data[0].stock_quantity !== null ? Number(data[0].stock_quantity) : null,
+                    stock_unit: data[0].stock_unit || formData.stock_unit,
+                    min_stock_alert: data[0].min_stock_alert !== undefined && data[0].min_stock_alert !== null ? Number(data[0].min_stock_alert) : null,
                 };
                 const newIngredients = [...ingredients, newIng];
                 setIngredients(newIngredients);
                 onIngredientsChange?.(newIngredients);
             }
-            setFormData({ name: '', buyPrice: 0, buyUnit: 'kg', buyQuantity: 1, weightPerUnit: 0 });
+            setFormData({
+                name: '', buyPrice: 0, buyUnit: 'kg', buyQuantity: 1, weightPerUnit: 0,
+                stock_quantity: null, stock_unit: 'gr', min_stock_alert: null
+            });
             setIsAdding(false);
             setStatusMsg({ type: 'success', text: 'Bahan baku berhasil ditambahkan.' });
             setTimeout(() => setStatusMsg(null), 3000);
-        } catch (error) {
+        } catch (error: any) {
             console.error('Add failed:', error);
-            setStatusMsg({ type: 'error', text: 'Gagal menambah bahan baku. Coba lagi.' });
+            const msg = error?.message || error?.code || 'Unknown error';
+            setStatusMsg({ type: 'error', text: `Gagal menyimpan: ${msg}` });
         } finally {
             setIsSubmitting(false);
         }
@@ -125,35 +166,59 @@ export default function IngredientManager({
                 setIngredients(newIngredients);
                 onIngredientsChange?.(newIngredients);
                 setEditingId(null);
-                setFormData({ name: '', buyPrice: 0, buyUnit: 'kg', buyQuantity: 1, weightPerUnit: 0 });
+                setFormData({
+                    name: '', buyPrice: 0, buyUnit: 'kg', buyQuantity: 1, weightPerUnit: 0,
+                    stock_quantity: null, stock_unit: 'gr', min_stock_alert: null
+                });
                 setStatusMsg({ type: 'success', text: 'Perubahan berhasil disimpan (Demo).' });
                 setTimeout(() => setStatusMsg(null), 3000);
                 return;
             }
 
-            const { error } = await supabase
+            let updateResult = await supabase
                 .from('ingredients')
                 .update({
                     name: formData.name.trim(),
                     buy_price: formData.buyPrice,
                     buy_quantity: formData.buyQuantity,
                     buy_unit: formData.buyUnit,
-                    weight_per_unit: formData.weightPerUnit
+                    weight_per_unit: formData.weightPerUnit,
+                    stock_quantity: formData.stock_quantity,
+                    stock_unit: formData.stock_unit,
+                    min_stock_alert: formData.min_stock_alert
                 })
                 .eq('id', editingId);
 
-            if (error) throw error;
+            // Fallback: retry with only core fields if schema cache is stale
+            if (updateResult.error && updateResult.error.code === 'PGRST204') {
+                console.warn('Some columns missing from schema cache, retrying with minimal fields...');
+                updateResult = await supabase
+                    .from('ingredients')
+                    .update({
+                        name: formData.name.trim(),
+                        buy_price: formData.buyPrice,
+                        buy_quantity: formData.buyQuantity,
+                        buy_unit: formData.buyUnit,
+                    })
+                    .eq('id', editingId);
+            }
+
+            if (updateResult.error) throw updateResult.error;
 
             const newIngredients = ingredients.map(ing => ing.id === editingId ? { ...formData, id: editingId } : ing);
             setIngredients(newIngredients);
             onIngredientsChange?.(newIngredients);
             setEditingId(null);
-            setFormData({ name: '', buyPrice: 0, buyUnit: 'kg', buyQuantity: 1, weightPerUnit: 0 });
+            setFormData({
+                name: '', buyPrice: 0, buyUnit: 'kg', buyQuantity: 1, weightPerUnit: 0,
+                stock_quantity: null, stock_unit: 'gr', min_stock_alert: null
+            });
             setStatusMsg({ type: 'success', text: 'Perubahan berhasil disimpan.' });
             setTimeout(() => setStatusMsg(null), 3000);
-        } catch (error) {
+        } catch (error: any) {
             console.error('Update failed:', error);
-            setStatusMsg({ type: 'error', text: 'Gagal mengupdate bahan baku.' });
+            const msg = error?.message || error?.code || 'Unknown error';
+            setStatusMsg({ type: 'error', text: `Gagal mengupdate: ${msg}` });
         } finally {
             setIsSubmitting(false);
         }
@@ -167,6 +232,9 @@ export default function IngredientManager({
             buyUnit: ing.buyUnit,
             buyQuantity: ing.buyQuantity,
             weightPerUnit: ing.weightPerUnit || 0,
+            stock_quantity: ing.stock_quantity,
+            stock_unit: ing.stock_unit || 'gr',
+            min_stock_alert: ing.min_stock_alert,
         });
     };
 
@@ -223,6 +291,100 @@ export default function IngredientManager({
         ing.name.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
+    const uninitializedCount = ingredients.filter(ing => ing.stock_quantity === null).length;
+
+    const handleBulkStockInit = async (updates: Partial<Ingredient>[]) => {
+        setIsSubmitting(true);
+        setStatusMsg(null);
+        try {
+            if (isDemoMode) {
+                const newIngredients = ingredients.map(ing => {
+                    const update = updates.find(u => u.id === ing.id);
+                    return update ? { ...ing, ...update } : ing;
+                });
+                setIngredients(newIngredients);
+                onIngredientsChange?.(newIngredients);
+                setStatusMsg({ type: 'success', text: 'Stok awal berhasil diatur (Demo).' });
+            } else {
+                // Sequential updates for simplicity if no bulk RPC
+                for (const update of updates) {
+                    const { error } = await supabase
+                        .from('ingredients')
+                        .update({
+                            stock_quantity: update.stock_quantity,
+                            stock_unit: update.stock_unit,
+                            min_stock_alert: update.min_stock_alert
+                        })
+                        .eq('id', update.id);
+                    if (error) throw error;
+                }
+                const newIngredients = ingredients.map(ing => {
+                    const update = updates.find(u => u.id === ing.id);
+                    return update ? { ...ing, ...update } : ing;
+                });
+                setIngredients(newIngredients);
+                onIngredientsChange?.(newIngredients);
+                setStatusMsg({ type: 'success', text: 'Stok awal berhasil diaktifkan.' });
+            }
+        } catch (error) {
+            console.error('Bulk init failed:', error);
+            setStatusMsg({ type: 'error', text: 'Gagal mengatur stok awal.' });
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    const handleRestock = async (qty: number, price: number, updateBase: boolean) => {
+        if (!restockIngredient) return;
+        setIsSubmitting(true);
+        try {
+            if (isDemoMode) {
+                const newIngredients = ingredients.map(ing =>
+                    ing.id === restockIngredient.id
+                        ? {
+                            ...ing,
+                            stock_quantity: (ing.stock_quantity || 0) + qty,
+                            buyPrice: updateBase ? price : ing.buyPrice
+                        }
+                        : ing
+                );
+                setIngredients(newIngredients);
+                onIngredientsChange?.(newIngredients);
+                setStatusMsg({ type: 'success', text: `Stok ${restockIngredient.name} berhasil ditambah (Demo).` });
+            } else {
+                const { error } = await supabase.rpc('restock_ingredient', {
+                    p_user_id: (await supabase.auth.getUser()).data.user?.id,
+                    p_ingredient_id: restockIngredient.id,
+                    p_quantity_added: qty,
+                    p_unit: restockIngredient.stock_unit || restockIngredient.buyUnit,
+                    p_purchase_price: price,
+                    p_update_base_price: updateBase,
+                    p_notes: 'Restock via Inventory Manager'
+                });
+
+                if (error) throw error;
+
+                const newIngredients = ingredients.map(ing =>
+                    ing.id === restockIngredient.id
+                        ? {
+                            ...ing,
+                            stock_quantity: (ing.stock_quantity || 0) + qty,
+                            buyPrice: updateBase ? price : ing.buyPrice
+                        }
+                        : ing
+                );
+                setIngredients(newIngredients);
+                onIngredientsChange?.(newIngredients);
+                setStatusMsg({ type: 'success', text: `Stok ${restockIngredient.name} berhasil diperbarui.` });
+            }
+        } catch (error) {
+            console.error('Restock failed:', error);
+            setStatusMsg({ type: 'error', text: 'Gagal menambah stok.' });
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
     return (
         <div className="space-y-4">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -253,6 +415,11 @@ export default function IngredientManager({
                     )}
                 </div>
             </div>
+
+            <StockOnboardingBanner
+                uninitializedCount={uninitializedCount}
+                onStartOnboarding={() => setShowWizard(true)}
+            />
 
             {statusMsg && (
                 <div className={`p-4 rounded-md text-sm font-medium animate-in slide-in-from-top-2 ${statusMsg.type === 'error' ? 'bg-red-50 text-red-600 border border-red-200 dark:bg-red-950/50 dark:text-red-400 dark:border-red-900' : 'bg-green-50 text-green-700 border border-green-200 dark:bg-green-950/50 dark:text-green-400 dark:border-green-900'}`}>
@@ -331,12 +498,50 @@ export default function IngredientManager({
                                     />
                                 </div>
                             )}
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium leading-none">Stok Awal (Opsional)</label>
+                                <div className="flex gap-2">
+                                    <input
+                                        type="number"
+                                        placeholder="0"
+                                        className="flex h-9 w-24 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                                        value={formData.stock_quantity === null ? '' : formData.stock_quantity}
+                                        onChange={e => setFormData({ ...formData, stock_quantity: e.target.value === '' ? null : Number(e.target.value) })}
+                                    />
+                                    <select
+                                        className="flex h-9 flex-1 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                                        value={formData.stock_unit || 'gr'}
+                                        onChange={e => setFormData({ ...formData, stock_unit: e.target.value })}
+                                    >
+                                        <option value="gr">gram (gr)</option>
+                                        <option value="kg">kilogram (kg)</option>
+                                        <option value="ml">mililiter (ml)</option>
+                                        <option value="L">liter (L)</option>
+                                        <option value="pcs">pieces (pcs)</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium leading-none">Min. Alert</label>
+                                <input
+                                    type="number"
+                                    placeholder="Alert limit"
+                                    className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                                    value={formData.min_stock_alert === null ? '' : formData.min_stock_alert}
+                                    onChange={e => setFormData({ ...formData, min_stock_alert: e.target.value === '' ? null : Number(e.target.value) })}
+                                />
+                            </div>
                         </div>
                     </div>
 
                     <div className="flex items-center p-6 pt-0 justify-end gap-2">
                         <button
-                            onClick={() => { setIsAdding(false); setEditingId(null); setFormData({ name: '', buyPrice: 0, buyUnit: 'kg', buyQuantity: 1 }); }}
+                            onClick={() => {
+                                setIsAdding(false); setEditingId(null); setFormData({
+                                    name: '', buyPrice: 0, buyUnit: 'kg', buyQuantity: 1, weightPerUnit: 0,
+                                    stock_quantity: null, stock_unit: 'gr', min_stock_alert: null
+                                });
+                            }}
                             className="inline-flex h-9 items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium shadow-sm hover:bg-accent hover:text-accent-foreground transition-colors"
                         >
                             Cancel
@@ -359,7 +564,8 @@ export default function IngredientManager({
                             <tr className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted">
                                 <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground [&:has([role=checkbox])]:pr-0">Bahan</th>
                                 <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground [&:has([role=checkbox])]:pr-0">Harga Satuan</th>
-                                <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground [&:has([role=checkbox])]:pr-0">Stok Beli</th>
+                                <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground [&:has([role=checkbox])]:pr-0">Beli</th>
+                                <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground [&:has([role=checkbox])]:pr-0">Stok (Live)</th>
                                 <th className="h-12 px-4 text-right align-middle font-medium text-muted-foreground [&:has([role=checkbox])]:pr-0">Actions</th>
                             </tr>
                         </thead>
@@ -387,6 +593,13 @@ export default function IngredientManager({
                                                 {ing.buyQuantity} {ing.buyUnit}
                                             </span>
                                         </td>
+                                        <td className="p-4 align-middle">
+                                            <StockBadge
+                                                quantity={ing.stock_quantity}
+                                                minAlert={ing.min_stock_alert}
+                                                unit={ing.stock_unit || ''}
+                                            />
+                                        </td>
                                         <td className="p-4 align-middle text-right">
                                             {deleteConfirmId === ing.id ? (
                                                 <div className="flex justify-end items-center gap-2 animate-in fade-in zoom-in duration-200">
@@ -406,6 +619,15 @@ export default function IngredientManager({
                                                 </div>
                                             ) : (
                                                 <div className="flex justify-end gap-1 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity">
+                                                    {ing.stock_quantity !== null && (
+                                                        <button
+                                                            onClick={() => setRestockIngredient(ing)}
+                                                            title="Tambah Stok"
+                                                            className="h-8 w-8 flex items-center justify-center rounded-md hover:bg-emerald-50 hover:text-emerald-600 dark:hover:bg-emerald-950 transition-colors border"
+                                                        >
+                                                            <LucideArrowRight className="h-4 w-4 -rotate-45" />
+                                                        </button>
+                                                    )}
                                                     <button
                                                         onClick={() => startEdit(ing)}
                                                         className="h-8 w-8 flex items-center justify-center rounded-md hover:bg-accent hover:text-accent-foreground transition-colors border"
@@ -428,6 +650,22 @@ export default function IngredientManager({
                     </table>
                 </div>
             </div>
+
+            {showWizard && (
+                <StockInitWizard
+                    ingredients={ingredients}
+                    onClose={() => setShowWizard(false)}
+                    onSave={handleBulkStockInit}
+                />
+            )}
+
+            {restockIngredient && (
+                <RestockModal
+                    ingredient={restockIngredient}
+                    onClose={() => setRestockIngredient(null)}
+                    onSave={handleRestock}
+                />
+            )}
         </div>
     );
 }

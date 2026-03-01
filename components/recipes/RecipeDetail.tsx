@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
+import { useDemoRecipes } from '@/lib/store/useDemoRecipes';
 import { Ingredient, Unit } from '../ingredients/IngredientManager';
 import {
     LucideArrowLeft,
@@ -17,11 +18,16 @@ import {
     LucideX,
     LucideChefHat,
     LucidePlus,
-    LucideDownload
+    LucideDownload,
+    LucideCamera,
+    LucideImage,
+    LucideStore
 } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import * as htmlToImage from 'html-to-image';
 import { jsPDF } from 'jspdf';
 import ExportTemplate from './ExportTemplate';
+import { calculateItemCost } from '@/utils/conversions';
 
 interface RecipeIngredientDetail {
     id?: string;
@@ -52,6 +58,8 @@ interface RecipeData {
     margin_percentage: number;
     created_at: string;
     total_hpp?: number;
+    is_menu_item?: boolean;
+    image?: string;
     recipe_ingredients?: RecipeIngredientDetail[];
     recipe_overheads?: RecipeOverheadDetail[];
 }
@@ -80,14 +88,64 @@ export default function RecipeDetail({ recipeId, onBack, availableIngredients, i
         category: 'Makanan' as 'Makanan' | 'Minuman',
         portions: 1,
         margin_percentage: 50,
+        is_menu_item: false,
     });
     const [editIngredients, setEditIngredients] = useState<EditIngredientRow[]>([]);
     const [editOverheads, setEditOverheads] = useState<RecipeOverheadDetail[]>([]);
+    const [editImage, setEditImage] = useState<string | null>(null);
     const [isExporting, setIsExporting] = useState(false);
+    const [saveSuccess, setSaveSuccess] = useState(false);
     const exportRef = React.useRef<HTMLDivElement>(null);
+    const editImageInputRef = React.useRef<HTMLInputElement>(null);
 
     const fetchRecipe = async () => {
         setIsLoading(true);
+        if (isDemoMode) {
+            const demoRecipes = useDemoRecipes.getState().recipes;
+            const data = demoRecipes.find(r => r.id === recipeId);
+
+            if (data) {
+                const dynamicIngredients = (data.recipe_ingredients || []).map(ri => ({
+                    ...ri,
+                    ingredients: availableIngredients.find(ai => ai.id === ri.ingredient_id)
+                }));
+
+                let ingredientsCost = 0;
+                dynamicIngredients.forEach((ri: any) => {
+                    if (ri.ingredients) {
+                        const ing = ri.ingredients;
+                        ingredientsCost += calculateItemCost(
+                            ri.quantity,
+                            ri.unit,
+                            ing.buyPrice,
+                            ing.buyQuantity,
+                            ing.buyUnit,
+                            ing.weightPerUnit
+                        );
+                    }
+                });
+
+                const overheadsCost = data.recipe_overheads?.reduce((sum: number, oh: any) => sum + Number(oh.cost), 0) || 0;
+
+                const recipeData: RecipeData = {
+                    ...data,
+                    recipe_ingredients: dynamicIngredients,
+                    recipe_overheads: data.recipe_overheads || [],
+                    total_hpp: ingredientsCost + overheadsCost,
+                };
+                setRecipe(recipeData);
+                setEditForm({
+                    name: recipeData.name,
+                    category: recipeData.category,
+                    portions: recipeData.portions,
+                    margin_percentage: recipeData.margin_percentage,
+                    is_menu_item: recipeData.is_menu_item || false,
+                });
+            }
+            setIsLoading(false);
+            return;
+        }
+
         try {
             const { data, error } = await supabase
                 .from('recipes')
@@ -123,11 +181,14 @@ export default function RecipeDetail({ recipeId, onBack, availableIngredients, i
                 data.recipe_ingredients?.forEach((ri: any) => {
                     if (ri.ingredients) {
                         const ing = ri.ingredients;
-                        const pricePerBaseUnit = ing.buy_price / ing.buy_quantity;
-                        if (ing.buy_unit === 'kg' && ri.unit === 'gr') ingredientsCost += ri.quantity * (pricePerBaseUnit / 1000);
-                        else if (ing.buy_unit === 'L' && ri.unit === 'ml') ingredientsCost += ri.quantity * (pricePerBaseUnit / 1000);
-                        else if (ing.buy_unit === ri.unit) ingredientsCost += ri.quantity * pricePerBaseUnit;
-                        else ingredientsCost += ri.quantity * pricePerBaseUnit;
+                        ingredientsCost += calculateItemCost(
+                            ri.quantity,
+                            ri.unit,
+                            ing.buy_price,
+                            ing.buy_quantity,
+                            ing.buy_unit,
+                            ing.weight_per_unit
+                        );
                     }
                 });
 
@@ -143,6 +204,7 @@ export default function RecipeDetail({ recipeId, onBack, availableIngredients, i
                     category: recipeData.category,
                     portions: recipeData.portions,
                     margin_percentage: recipeData.margin_percentage,
+                    is_menu_item: recipeData.is_menu_item || false,
                 });
             }
         } catch (error) {
@@ -164,7 +226,9 @@ export default function RecipeDetail({ recipeId, onBack, availableIngredients, i
             category: recipe.category,
             portions: recipe.portions,
             margin_percentage: recipe.margin_percentage,
+            is_menu_item: recipe.is_menu_item || false,
         });
+        setEditImage(recipe.image || null);
         // Populate edit ingredients from current recipe data
         setEditIngredients(
             (recipe.recipe_ingredients || []).map((ri, idx) => ({
@@ -219,10 +283,14 @@ export default function RecipeDetail({ recipeId, onBack, availableIngredients, i
     const editIngredientsCost = editIngredients.reduce((sum, item) => {
         const ing = availableIngredients.find(i => i.id === item.ingredientId);
         if (!ing || !item.quantity) return sum;
-        const pricePerBaseUnit = ing.buyPrice / ing.buyQuantity;
-        if (ing.buyUnit === 'kg' && item.unit === 'gr') return sum + item.quantity * (pricePerBaseUnit / 1000);
-        if (ing.buyUnit === 'L' && item.unit === 'ml') return sum + item.quantity * (pricePerBaseUnit / 1000);
-        return sum + item.quantity * pricePerBaseUnit;
+        return sum + calculateItemCost(
+            item.quantity,
+            item.unit,
+            ing.buyPrice,
+            ing.buyQuantity,
+            ing.buyUnit,
+            ing.weightPerUnit
+        );
     }, 0);
 
     const editOverheadsCost = editOverheads.reduce((sum, oh) => sum + (oh.cost || 0), 0);
@@ -234,35 +302,72 @@ export default function RecipeDetail({ recipeId, onBack, availableIngredients, i
     const getIngredientCost = (ri: RecipeIngredientDetail) => {
         if (!ri.ingredients) return 0;
         const ing = ri.ingredients;
-        const pricePerBaseUnit = ing.buy_price / ing.buy_quantity;
-        if (ing.buy_unit === 'kg' && ri.unit === 'gr') return ri.quantity * (pricePerBaseUnit / 1000);
-        if (ing.buy_unit === 'L' && ri.unit === 'ml') return ri.quantity * (pricePerBaseUnit / 1000);
-        return ri.quantity * pricePerBaseUnit;
+        return calculateItemCost(
+            ri.quantity,
+            ri.unit,
+            ing.buy_price,
+            ing.buy_quantity,
+            ing.buy_unit,
+            ing.weight_per_unit || 0
+        );
     };
 
     const handleSaveEdit = async () => {
         if (!recipe) return;
 
         if (isDemoMode) {
-            alert('Mode Demo: Perubahan tidak akan disimpan ke database.');
+            const updateDemoRecipe = useDemoRecipes.getState().updateRecipe;
+            updateDemoRecipe(recipe.id, {
+                name: editForm.name,
+                category: editForm.category,
+                portions: editForm.portions,
+                margin_percentage: editForm.margin_percentage,
+                is_menu_item: editForm.is_menu_item,
+                image: editImage || undefined,
+                recipe_ingredients: editIngredients.filter(r => r.ingredientId && r.quantity > 0).map(r => ({
+                    ingredient_id: r.ingredientId,
+                    quantity: r.quantity,
+                    unit: r.unit,
+                    ingredients: availableIngredients.find(ai => ai.id === r.ingredientId)
+                })),
+                recipe_overheads: editOverheads.filter(o => o.name && o.cost > 0)
+            });
+            await fetchRecipe();
             setIsEditing(false);
+            setSaveSuccess(true);
+            setTimeout(() => setSaveSuccess(false), 3000);
             return;
         }
 
         setIsSaving(true);
         try {
             // 1. Update basic recipe info
-            const { error: recipeError } = await supabase
+            let updateResult = await supabase
                 .from('recipes')
                 .update({
                     name: editForm.name,
                     category: editForm.category,
                     portions: editForm.portions,
                     margin_percentage: editForm.margin_percentage,
+                    is_menu_item: editForm.is_menu_item,
+                    image: editImage,
                 })
                 .eq('id', recipe.id);
 
-            if (recipeError) throw recipeError;
+            // Fallback: if is_menu_item or image columns missing, retry without them
+            if (updateResult.error && updateResult.error.code === 'PGRST204') {
+                updateResult = await supabase
+                    .from('recipes')
+                    .update({
+                        name: editForm.name,
+                        category: editForm.category,
+                        portions: editForm.portions,
+                        margin_percentage: editForm.margin_percentage,
+                    })
+                    .eq('id', recipe.id);
+            }
+
+            if (updateResult.error) throw updateResult.error;
 
             // 2. Delete all existing recipe_ingredients, then re-insert
             const { error: deleteIngError } = await supabase
@@ -310,6 +415,8 @@ export default function RecipeDetail({ recipeId, onBack, availableIngredients, i
 
             await fetchRecipe();
             setIsEditing(false);
+            setSaveSuccess(true);
+            setTimeout(() => setSaveSuccess(false), 3000);
         } catch (error) {
             console.error('Update failed:', error);
             alert('Gagal mengupdate resep.');
@@ -353,6 +460,7 @@ export default function RecipeDetail({ recipeId, onBack, availableIngredients, i
         if (!confirm('Hapus resep ini secara permanen?')) return;
 
         if (isDemoMode) {
+            useDemoRecipes.getState().deleteRecipe(recipe.id);
             onBack();
             return;
         }
@@ -399,6 +507,13 @@ export default function RecipeDetail({ recipeId, onBack, availableIngredients, i
 
     return (
         <div className="space-y-6 animate-in fade-in duration-500">
+            {/* Save Success Toast */}
+            {saveSuccess && (
+                <div className="fixed top-4 right-4 z-50 flex items-center gap-3 bg-emerald-600 text-white px-5 py-3 rounded-xl shadow-lg animate-in slide-in-from-top-5 duration-300">
+                    <LucideSave className="h-4 w-4" />
+                    <span className="text-sm font-semibold">Perubahan berhasil disimpan!</span>
+                </div>
+            )}
             {/* Page Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div className="flex items-center gap-4">
@@ -476,73 +591,188 @@ export default function RecipeDetail({ recipeId, onBack, availableIngredients, i
                         </div>
                         <div className="p-6">
                             {isEditing ? (
-                                <div className="space-y-4">
-                                    <div className="space-y-2">
-                                        <label className="text-sm font-medium leading-none">Nama Produk</label>
+                                <div className="flex flex-col md:flex-row gap-6">
+                                    {/* Left Column - Image Portrait */}
+                                    <div className="w-full max-w-[240px] mx-auto md:max-w-none md:w-1/3 space-y-2 shrink-0">
+                                        <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Foto Menu</label>
                                         <input
-                                            type="text"
-                                            className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                                            value={editForm.name}
-                                            onChange={e => setEditForm({ ...editForm, name: e.target.value })}
+                                            ref={editImageInputRef}
+                                            type="file"
+                                            accept="image/*"
+                                            className="hidden"
+                                            onChange={e => {
+                                                const file = e.target.files?.[0];
+                                                if (!file) return;
+                                                const reader = new FileReader();
+                                                reader.onload = () => setEditImage(reader.result as string);
+                                                reader.readAsDataURL(file);
+                                            }}
                                         />
-                                    </div>
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div className="space-y-2">
-                                            <label className="text-sm font-medium leading-none">Kategori</label>
-                                            <select
-                                                className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                                                value={editForm.category}
-                                                onChange={e => setEditForm({ ...editForm, category: e.target.value as 'Makanan' | 'Minuman' })}
+                                        {editImage ? (
+                                            <div className="relative aspect-[3/4] w-full rounded-xl overflow-hidden border border-zinc-200 dark:border-zinc-800 group cursor-pointer" onClick={() => editImageInputRef.current?.click()}>
+                                                <img src={editImage} alt="Preview" className="w-full h-full object-cover" />
+                                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2">
+                                                    <LucideCamera className="h-6 w-6 text-white" />
+                                                    <span className="text-white text-xs font-semibold">Ganti Foto</span>
+                                                </div>
+                                                <button
+                                                    type="button"
+                                                    onClick={e => { e.stopPropagation(); setEditImage(null); }}
+                                                    className="absolute top-2 right-2 h-7 w-7 rounded-full bg-black/60 hover:bg-red-600 text-white flex items-center justify-center transition-colors"
+                                                >
+                                                    <LucideX className="h-3.5 w-3.5" />
+                                                </button>
+                                            </div>
+                                        ) : (
+                                            <button
+                                                type="button"
+                                                onClick={() => editImageInputRef.current?.click()}
+                                                className="flex aspect-[3/4] w-full flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-zinc-200 dark:border-zinc-800 hover:border-emerald-400 hover:bg-emerald-50/50 dark:hover:bg-emerald-950/20 transition-colors text-muted-foreground hover:text-emerald-600"
                                             >
-                                                <option value="Makanan">Makanan</option>
-                                                <option value="Minuman">Minuman</option>
-                                            </select>
-                                        </div>
+                                                <LucideImage className="h-8 w-8" />
+                                                <span className="text-xs font-medium text-center px-4">Klik untuk upload foto menu</span>
+                                                <span className="text-[10px]">Portrait 3:4 recommended</span>
+                                            </button>
+                                        )}
+                                    </div>
+
+                                    {/* Right Column - Fields */}
+                                    <div className="flex-1 space-y-4">
                                         <div className="space-y-2">
-                                            <label className="text-sm font-medium leading-none">Porsi per Batch</label>
+                                            <label className="text-sm font-medium leading-none">Nama Produk</label>
                                             <input
-                                                type="number"
-                                                className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                                                value={editForm.portions || ''}
-                                                onChange={e => setEditForm({ ...editForm, portions: Number(e.target.value) })}
+                                                type="text"
+                                                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                                                value={editForm.name}
+                                                onChange={e => setEditForm({ ...editForm, name: e.target.value })}
                                             />
                                         </div>
-                                    </div>
-                                    <div className="space-y-2">
-                                        <label className="text-sm font-medium leading-none">Margin (%)</label>
-                                        <input
-                                            type="number"
-                                            className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                                            value={editForm.margin_percentage || ''}
-                                            onChange={e => setEditForm({ ...editForm, margin_percentage: Number(e.target.value) })}
-                                        />
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                            <div className="space-y-2">
+                                                <label className="text-sm font-medium leading-none text-muted-foreground uppercase tracking-widest text-[10px]">Kategori</label>
+                                                <div className="flex gap-2">
+                                                    <button
+                                                        onClick={() => setEditForm({ ...editForm, category: 'Makanan' })}
+                                                        className={`flex-1 h-10 rounded-md text-xs font-bold transition-all ${editForm.category === 'Makanan' ? 'bg-zinc-900 text-white dark:bg-zinc-50 dark:text-zinc-900 shadow-md' : 'border hover:bg-zinc-50 dark:hover:bg-zinc-900 border-zinc-200 dark:border-zinc-800'}`}
+                                                    >
+                                                        Makanan
+                                                    </button>
+                                                    <button
+                                                        onClick={() => setEditForm({ ...editForm, category: 'Minuman' })}
+                                                        className={`flex-1 h-10 rounded-md text-xs font-bold transition-all ${editForm.category === 'Minuman' ? 'bg-zinc-900 text-white dark:bg-zinc-50 dark:text-zinc-900 shadow-md' : 'border hover:bg-zinc-50 dark:hover:bg-zinc-900 border-zinc-200 dark:border-zinc-800'}`}
+                                                    >
+                                                        Minuman
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            <div className="space-y-2">
+                                                <label className="text-sm font-medium leading-none text-muted-foreground uppercase tracking-widest text-[10px]">Porsi per Batch</label>
+                                                <input
+                                                    type="number"
+                                                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring font-bold"
+                                                    value={editForm.portions || ''}
+                                                    onChange={e => setEditForm({ ...editForm, portions: Number(e.target.value) })}
+                                                />
+                                            </div>
+                                        </div>
+                                        <div className="space-y-2 pt-2">
+                                            <div className="flex justify-between items-center mb-1">
+                                                <label className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Margin Profit (%)</label>
+                                                <span className="text-sm font-black text-emerald-600 dark:text-emerald-400">{editForm.margin_percentage}%</span>
+                                            </div>
+                                            <div className="flex items-center gap-3">
+                                                <input
+                                                    type="range"
+                                                    min="0" max="500" step="5"
+                                                    className="flex-1 h-2 accent-emerald-600 cursor-pointer"
+                                                    value={editForm.margin_percentage}
+                                                    onChange={e => setEditForm({ ...editForm, margin_percentage: Number(e.target.value) })}
+                                                />
+                                            </div>
+                                        </div>
+                                        <div className="pt-4 mt-2 border-t border-dashed">
+                                            <label className="flex items-center gap-3 p-3 rounded-lg border bg-emerald-50/50 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-800 cursor-pointer hover:bg-emerald-50 dark:hover:bg-emerald-950/30 transition-colors">
+                                                <div className="flex-1">
+                                                    <p className="text-sm font-bold text-emerald-900 dark:text-emerald-100">Tampilkan di Menu Kasir</p>
+                                                    <p className="text-[10px] text-emerald-700/70 dark:text-emerald-300/50">Menu ini akan muncul secara otomatis di halaman POS</p>
+                                                </div>
+                                                <input
+                                                    type="checkbox"
+                                                    className="h-5 w-5 rounded border-zinc-300 text-emerald-600 focus:ring-emerald-600 cursor-pointer"
+                                                    checked={editForm.is_menu_item}
+                                                    onChange={e => setEditForm({ ...editForm, is_menu_item: e.target.checked })}
+                                                />
+                                            </label>
+                                        </div>
                                     </div>
                                 </div>
                             ) : (
-                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                    <div className="space-y-1">
-                                        <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-                                            <LucidePackage className="h-3 w-3" /> Produk
-                                        </p>
-                                        <p className="text-lg font-bold">{recipe.name}</p>
-                                    </div>
-                                    <div className="space-y-1">
-                                        <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-                                            {recipe.category === 'Makanan' ? <LucideUtensils className="h-3 w-3" /> : <LucideCoffee className="h-3 w-3" />} Kategori
-                                        </p>
-                                        <p className="text-lg font-bold">{recipe.category}</p>
-                                    </div>
-                                    <div className="space-y-1">
-                                        <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-                                            <LucideChefHat className="h-3 w-3" /> Porsi
-                                        </p>
-                                        <p className="text-lg font-bold">{recipe.portions} Porsi</p>
-                                    </div>
-                                    <div className="space-y-1">
-                                        <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-                                            <LucideCalendar className="h-3 w-3" /> Dibuat
-                                        </p>
-                                        <p className="text-sm font-semibold">{new Date(recipe.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
+                                <div className="flex flex-col md:flex-row gap-8">
+                                    {recipe.image ? (
+                                        <div className="w-full max-w-[240px] mx-auto md:max-w-none md:w-1/3 aspect-[3/4] rounded-2xl overflow-hidden border shadow-sm bg-muted shrink-0">
+                                            <img src={recipe.image} alt={recipe.name} className="w-full h-full object-cover transition-transform hover:scale-105 duration-700" />
+                                        </div>
+                                    ) : (
+                                        <div className="w-full max-w-[240px] mx-auto md:max-w-none md:w-1/3 aspect-[3/4] rounded-2xl border-2 border-dashed border-zinc-200 dark:border-zinc-800 flex flex-col items-center justify-center bg-zinc-50 dark:bg-zinc-950 text-muted-foreground shrink-0">
+                                            <LucideImage className="h-10 w-10 mb-2 opacity-20" />
+                                            <span className="text-xs font-medium">Belum ada foto</span>
+                                        </div>
+                                    )}
+
+                                    <div className="flex-1 space-y-8 py-2">
+                                        <div className="grid grid-cols-1 gap-6">
+                                            <div className="space-y-1">
+                                                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground flex items-center gap-2">
+                                                    <span className="w-4 h-[1px] bg-zinc-300 dark:bg-zinc-700" /> Nama Produk
+                                                </p>
+                                                <h1 className="text-3xl font-black tracking-tight">{recipe.name}</h1>
+                                            </div>
+                                        </div>
+
+                                        <div className="grid grid-cols-2 md:grid-cols-2 gap-x-8 gap-y-6">
+                                            <div className="space-y-1">
+                                                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground flex items-center gap-2">
+                                                    {recipe.category === 'Makanan' ? <LucideUtensils className="h-3 w-3" /> : <LucideCoffee className="h-3 w-3" />} Kategori
+                                                </p>
+                                                <p className="text-lg font-bold">{recipe.category}</p>
+                                            </div>
+                                            <div className="space-y-1">
+                                                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground flex items-center gap-2">
+                                                    <LucideChefHat className="h-3 w-3" /> Batch
+                                                </p>
+                                                <p className="text-lg font-bold">{recipe.portions} Porsi</p>
+                                            </div>
+                                            <div className="space-y-1">
+                                                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground flex items-center gap-2">
+                                                    <LucideZap className="h-3 w-3" /> HPP Per Porsi
+                                                </p>
+                                                <p className="text-lg font-bold text-emerald-600 dark:text-emerald-400">Rp {(recipe.total_hpp! / recipe.portions).toLocaleString('id-ID')}</p>
+                                            </div>
+                                            <div className="space-y-1">
+                                                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground flex items-center gap-2">
+                                                    <LucideTrendingUp className="h-3 w-3" /> Selling Price
+                                                </p>
+                                                <p className="text-lg font-bold text-blue-600 dark:text-blue-400">Rp {Math.ceil((recipe.total_hpp! / recipe.portions) * (1 + recipe.margin_percentage / 100) / 100 * 100).toLocaleString('id-ID')}</p>
+                                            </div>
+                                            <div className="space-y-1">
+                                                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground flex items-center gap-2">
+                                                    <LucideCalendar className="h-3 w-3" /> Dibuat
+                                                </p>
+                                                <p className="text-lg font-bold">{new Date(recipe.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
+                                            </div>
+                                        </div>
+
+                                        <div className="pt-2">
+                                            {recipe.is_menu_item ? (
+                                                <span className="inline-flex items-center gap-2 rounded-full bg-emerald-50 dark:bg-emerald-950/30 px-3 py-1 text-[11px] font-black text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
+                                                    <LucideStore className="h-3 w-3" /> AKTIF DI POS (MENU KASIR)
+                                                </span>
+                                            ) : (
+                                                <span className="inline-flex items-center gap-2 rounded-full bg-zinc-100 dark:bg-zinc-800/50 px-3 py-1 text-[11px] font-black text-zinc-500 border border-transparent">
+                                                    <LucideX className="h-3 w-3" /> HANYA KALKULASI INTERNAL
+                                                </span>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
                             )}
@@ -551,7 +781,7 @@ export default function RecipeDetail({ recipeId, onBack, availableIngredients, i
 
                     {/* Ingredients Card */}
                     <div className="rounded-xl border bg-card text-card-foreground shadow-sm">
-                        <div className="flex flex-row items-center justify-between p-6 border-b">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-6 border-b">
                             <div className="space-y-1.5">
                                 <h3 className="font-semibold leading-none tracking-tight flex items-center gap-2">
                                     <LucideUtensils className="h-4 w-4 text-muted-foreground" />
@@ -685,7 +915,7 @@ export default function RecipeDetail({ recipeId, onBack, availableIngredients, i
 
                     {/* Overheads Card */}
                     <div className="rounded-xl border bg-card text-card-foreground shadow-sm">
-                        <div className="flex flex-row items-center justify-between p-6 border-b">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-6 border-b">
                             <div className="space-y-1.5">
                                 <h3 className="font-semibold leading-none tracking-tight flex items-center gap-2">
                                     <LucideZap className="h-4 w-4 text-muted-foreground" />

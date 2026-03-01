@@ -60,17 +60,20 @@ export const calculateItemCost = (
 
     // STANDARD CONVERSIONS (Same category)
     let standardizedBuyQty = buyQuantity;
-    if (usedUnit === 'gr' && buyUnit === 'kg') {
+    const uUnit = usedUnit.toLowerCase();
+    const bUnit = buyUnit.toLowerCase();
+
+    if (uUnit === 'gr' && bUnit === 'kg') {
         standardizedBuyQty = buyQuantity * 1000;
-    } else if (usedUnit === 'kg' && buyUnit === 'gr') {
+    } else if (uUnit === 'kg' && bUnit === 'gr') {
         standardizedBuyQty = buyQuantity / 1000;
-    } else if (usedUnit === 'ml' && buyUnit === 'L') {
+    } else if (uUnit === 'ml' && (bUnit === 'l' || bUnit === 'liter')) {
         standardizedBuyQty = buyQuantity * 1000;
-    } else if (usedUnit === 'L' && buyUnit === 'ml') {
+    } else if ((uUnit === 'l' || uUnit === 'liter') && bUnit === 'ml') {
         standardizedBuyQty = buyQuantity / 1000;
-    } else if (usedUnit === 'pcs' && buyUnit === 'lusin') {
+    } else if (uUnit === 'pcs' && bUnit === 'lusin') {
         standardizedBuyQty = buyQuantity * 12;
-    } else if (usedUnit === 'lusin' && buyUnit === 'pcs') {
+    } else if (uUnit === 'lusin' && bUnit === 'pcs') {
         standardizedBuyQty = buyQuantity / 12;
     }
 

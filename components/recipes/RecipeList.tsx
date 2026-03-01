@@ -10,7 +10,11 @@ import {
     LucideArrowRight,
     LucideChevronRight,
     LucideX,
+    LucideImage
 } from 'lucide-react';
+import { calculateItemCost } from '@/utils/conversions';
+import { useDemoRecipes } from '@/lib/store/useDemoRecipes';
+import { Ingredient } from '@/components/ingredients/IngredientManager';
 
 interface SavedRecipe {
     id: string;
@@ -20,21 +24,26 @@ interface SavedRecipe {
     margin_percentage: number;
     created_at: string;
     total_hpp?: number;
+    is_menu_item?: boolean;
+    image?: string;
 }
 
 interface RecipeListProps {
     onViewRecipe?: (recipeId: string) => void;
+    availableIngredients: Ingredient[];
     isDemoMode?: boolean;
 }
 
-export default function RecipeList({ onViewRecipe, isDemoMode = false }: RecipeListProps) {
+export default function RecipeList({ onViewRecipe, availableIngredients, isDemoMode = false }: RecipeListProps) {
     const [recipes, setRecipes] = useState<SavedRecipe[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
+    const { recipes: demoRecipes, deleteRecipe } = useDemoRecipes();
+
     const fetchRecipes = async () => {
         if (isDemoMode) {
-            setRecipes([]);
+            setRecipes(demoRecipes);
             setIsLoading(false);
             return;
         }
@@ -66,16 +75,19 @@ export default function RecipeList({ onViewRecipe, isDemoMode = false }: RecipeL
                 const processedRecipes = data.map((recipe: any) => {
                     let ingredientsCost = 0;
                     recipe.recipe_ingredients?.forEach((ri: any) => {
-                        if (ri.ingredients) {
-                            const ing = ri.ingredients;
-                            let pricePerBaseUnit = 0;
-                            if (['kg', 'L', 'pack', 'pcs', 'lusin'].includes(ing.buy_unit)) {
-                                pricePerBaseUnit = ing.buy_price / ing.buy_quantity;
-                                if (ing.buy_unit === 'kg' && ri.unit === 'gr') ingredientsCost += ri.quantity * (pricePerBaseUnit / 1000);
-                                else if (ing.buy_unit === 'L' && ri.unit === 'ml') ingredientsCost += ri.quantity * (pricePerBaseUnit / 1000);
-                                else if (ing.buy_unit === ri.unit) ingredientsCost += ri.quantity * pricePerBaseUnit;
-                                else ingredientsCost += ri.quantity * (pricePerBaseUnit);
-                            }
+                        const ing = isDemoMode
+                            ? availableIngredients.find(ai => ai.id === ri.ingredient_id)
+                            : ri.ingredients;
+
+                        if (ing) {
+                            ingredientsCost += calculateItemCost(
+                                ri.quantity,
+                                ri.unit,
+                                isDemoMode ? ing.buyPrice : ing.buy_price,
+                                isDemoMode ? ing.buyQuantity : ing.buy_quantity,
+                                isDemoMode ? ing.buyUnit : ing.buy_unit,
+                                (isDemoMode ? ing.weightPerUnit : ing.weight_per_unit) || 0
+                            );
                         }
                     });
 
@@ -98,11 +110,15 @@ export default function RecipeList({ onViewRecipe, isDemoMode = false }: RecipeL
 
     useEffect(() => {
         fetchRecipes();
-    }, []);
+    }, [isDemoMode, demoRecipes]);
 
     const handleDeleteConfirm = async (id: string, e: React.MouseEvent) => {
         e.stopPropagation();
         setDeleteConfirmId(null);
+        if (isDemoMode) {
+            deleteRecipe(id);
+            return;
+        }
         try {
             const { error } = await supabase.from('recipes').delete().eq('id', id);
             if (error) throw error;
@@ -144,14 +160,24 @@ export default function RecipeList({ onViewRecipe, isDemoMode = false }: RecipeL
                             onClick={() => onViewRecipe?.(recipe.id)}
                             className="flex items-center gap-3 px-5 py-4 active:bg-muted/50 transition-colors cursor-pointer"
                         >
-                            <div className="h-11 w-11 rounded-full border bg-muted flex items-center justify-center text-zinc-600 dark:text-zinc-300 shrink-0">
-                                {recipe.category === 'Makanan'
-                                    ? <LucideUtensils className="h-5 w-5" />
-                                    : <LucideCoffee className="h-5 w-5" />
-                                }
+                            <div className="h-16 w-12 rounded-lg border bg-zinc-50 dark:bg-zinc-900 flex items-center justify-center overflow-hidden shrink-0">
+                                {recipe.image ? (
+                                    <img src={recipe.image} alt={recipe.name} className="h-full w-full object-cover" />
+                                ) : (
+                                    recipe.category === 'Makanan'
+                                        ? <LucideUtensils className="h-5 w-5 text-zinc-300" />
+                                        : <LucideCoffee className="h-5 w-5 text-zinc-300" />
+                                )}
                             </div>
                             <div className="flex-1 min-w-0">
-                                <p className="text-sm font-semibold truncate">{recipe.name}</p>
+                                <div className="flex items-center gap-2">
+                                    <p className="text-sm font-semibold truncate">{recipe.name}</p>
+                                    {recipe.is_menu_item && (
+                                        <span className="inline-flex items-center rounded-full bg-blue-50 dark:bg-blue-950/30 px-1.5 py-0.5 text-[8px] font-bold text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-800">
+                                            POS
+                                        </span>
+                                    )}
+                                </div>
                                 <div className="flex items-center gap-2 mt-0.5">
                                     <span className="text-xs text-muted-foreground">{recipe.portions} Porsi</span>
                                     <span className="text-xs text-muted-foreground">·</span>
@@ -193,14 +219,15 @@ export default function RecipeList({ onViewRecipe, isDemoMode = false }: RecipeL
             <div className="hidden md:block w-full overflow-auto">
                 <table className="w-full caption-bottom text-sm">
                     <thead className="[&_tr]:border-b bg-muted/50">
-                        <tr className="border-b transition-colors">
-                            <th className="h-10 px-4 text-left align-middle font-medium text-muted-foreground">Produk</th>
-                            <th className="h-10 px-4 text-left align-middle font-medium text-muted-foreground">Kategori</th>
-                            <th className="h-10 px-4 text-right align-middle font-medium text-muted-foreground">Porsi</th>
-                            <th className="h-10 px-4 text-right align-middle font-medium text-muted-foreground">HPP / Unit</th>
-                            <th className="h-10 px-4 text-right align-middle font-medium text-muted-foreground">Harga Jual</th>
-                            <th className="h-10 px-4 text-right align-middle font-medium text-muted-foreground">Margin</th>
-                            <th className="h-10 px-4 text-right align-middle font-medium text-muted-foreground">Aksi</th>
+                        <tr className="border-b transition-colors text-[10px] font-black uppercase tracking-widest text-muted-foreground/70">
+                            <th className="h-10 px-4 text-left align-middle w-16">Foto</th>
+                            <th className="h-10 px-4 text-left align-middle">Produk</th>
+                            <th className="h-10 px-4 text-left align-middle">Kategori</th>
+                            <th className="h-10 px-4 text-right align-middle">Batch</th>
+                            <th className="h-10 px-4 text-right align-middle">HPP / Unit</th>
+                            <th className="h-10 px-4 text-right align-middle">Harga Jual</th>
+                            <th className="h-10 px-4 text-right align-middle">Margin</th>
+                            <th className="h-10 px-4 text-right align-middle">Aksi</th>
                         </tr>
                     </thead>
                     <tbody className="[&_tr:last-child]:border-0">
@@ -215,7 +242,25 @@ export default function RecipeList({ onViewRecipe, isDemoMode = false }: RecipeL
                                     className="border-b transition-colors hover:bg-muted/50 cursor-pointer group"
                                 >
                                     <td className="p-4 align-middle">
-                                        <span className="font-semibold">{recipe.name}</span>
+                                        <div className="h-12 w-9 rounded-md border bg-zinc-50 dark:bg-zinc-900 flex items-center justify-center overflow-hidden">
+                                            {recipe.image ? (
+                                                <img src={recipe.image} alt={recipe.name} className="h-full w-full object-cover" />
+                                            ) : (
+                                                recipe.category === 'Makanan'
+                                                    ? <LucideUtensils className="h-3 w-3 text-zinc-300" />
+                                                    : <LucideCoffee className="h-3 w-3 text-zinc-300" />
+                                            )}
+                                        </div>
+                                    </td>
+                                    <td className="p-4 align-middle">
+                                        <div className="flex items-center gap-2">
+                                            <span className="font-bold text-zinc-900 dark:text-zinc-100">{recipe.name}</span>
+                                            {recipe.is_menu_item && (
+                                                <span className="inline-flex items-center rounded-full bg-blue-50 dark:bg-blue-950/30 px-1.5 py-0.5 text-[8px] font-black text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-800">
+                                                    POS
+                                                </span>
+                                            )}
+                                        </div>
                                     </td>
                                     <td className="p-4 align-middle">
                                         <span className="inline-flex items-center gap-1.5 rounded-md bg-muted px-2 py-0.5 text-xs font-semibold border">

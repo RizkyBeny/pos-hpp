@@ -5,6 +5,11 @@ import IngredientManager, { Ingredient } from "@/components/ingredients/Ingredie
 import RecipeForm from "@/components/recipes/RecipeForm";
 import RecipeList from "@/components/recipes/RecipeList";
 import RecipeDetail from "@/components/recipes/RecipeDetail";
+import InventoryPage from "@/components/inventory/InventoryPage";
+import POSPage from "@/components/pos/POSPage";
+import SalesHistoryPage from "@/components/sales/SalesHistoryPage";
+import RevenueChart from "@/components/dashboard/RevenueChart";
+import { useDemoRecipes } from "@/lib/store/useDemoRecipes";
 import {
     LucidePlus,
     LucideChefHat,
@@ -16,9 +21,13 @@ import {
     LucideBell,
     LucideCalendar,
     LucideSettings,
+    LucideHistory,
+    LucideAlertTriangle,
     LucideLogOut,
     LucideMenu,
-    LucideX
+    LucideX,
+    LucideShoppingBag,
+    LucideBookOpen
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 
@@ -31,9 +40,10 @@ export default function Home() {
     const [authError, setAuthError] = useState<string | null>(null);
     const [isAuthLoading, setIsAuthLoading] = useState(false);
 
-    const [activeTab, setActiveTab] = useState<'dashboard' | 'ingredients' | 'recipes' | 'recipe-detail'>('dashboard');
+    const [activeTab, setActiveTab] = useState<'dashboard' | 'ingredients' | 'recipes' | 'recipe-list' | 'recipe-detail' | 'inventory' | 'pos' | 'sales'>('dashboard');
     const [ingredients, setIngredients] = useState<Ingredient[]>([]);
     const [recipeCount, setRecipeCount] = useState<number>(0);
+    const [todaySales, setTodaySales] = useState<number>(0);
     const [isLoading, setIsLoading] = useState(true);
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -82,6 +92,7 @@ export default function Home() {
                 setIngredients([]);
                 setRecipeCount(0);
                 setIsLoading(false);
+                useDemoRecipes.getState().clear();
                 return;
             }
 
@@ -100,7 +111,10 @@ export default function Home() {
                         buyPrice: Number(item.buy_price),
                         buyQuantity: Number(item.buy_quantity),
                         buyUnit: item.buy_unit,
-                        weightPerUnit: Number(item.weight_per_unit)
+                        weightPerUnit: Number(item.weight_per_unit),
+                        stock_quantity: item.stock_quantity !== null ? Number(item.stock_quantity) : null,
+                        stock_unit: item.stock_unit,
+                        min_stock_alert: item.min_stock_alert !== null ? Number(item.min_stock_alert) : null,
                     }));
                     setIngredients(mappedData);
                 }
@@ -111,6 +125,19 @@ export default function Home() {
                 if (!recipeError && count !== null) {
                     setRecipeCount(count);
                 }
+
+                const todayStr = new Date().toISOString().split('T')[0];
+                const { data: salesData, error: salesError } = await supabase
+                    .from('transactions')
+                    .select('total_amount')
+                    .eq('sale_date', todayStr)
+                    .eq('status', 'completed');
+
+                if (!salesError && salesData) {
+                    const totalSales = salesData.reduce((sum, tx) => sum + tx.total_amount, 0);
+                    setTodaySales(totalSales);
+                }
+
             } catch (error) {
                 console.error('Error fetching dashboard data:', error);
             } finally {
@@ -120,6 +147,12 @@ export default function Home() {
 
         fetchData();
     }, [isAuthenticated, isDemoMode]);
+
+    const lowStockIngredients = ingredients.filter(ing =>
+        ing.stock_quantity !== null &&
+        ing.min_stock_alert !== null &&
+        ing.stock_quantity <= ing.min_stock_alert
+    );
 
     const handleIngredientsChange = (newIngs: Ingredient[]) => {
         setIngredients(newIngs);
@@ -277,11 +310,20 @@ export default function Home() {
                             <button onClick={() => switchTab('dashboard')} className={`flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-colors ${activeTab === 'dashboard' ? 'bg-zinc-100 text-zinc-900 dark:bg-zinc-800 dark:text-zinc-50 shadow-sm' : 'text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-zinc-900'}`}>
                                 <LucideLayoutDashboard className="h-4 w-4" /> Dashboard
                             </button>
-                            <button onClick={() => switchTab('ingredients')} className={`flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-colors ${activeTab === 'ingredients' ? 'bg-zinc-100 text-zinc-900 dark:bg-zinc-800 dark:text-zinc-50 shadow-sm' : 'text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-zinc-900'}`}>
+                            <button onClick={() => switchTab('pos')} className={`flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-colors ${activeTab === 'pos' ? 'bg-zinc-100 text-zinc-900 dark:bg-zinc-800 dark:text-zinc-50 shadow-sm' : 'text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-zinc-900'}`}>
+                                <LucideShoppingBag className="h-4 w-4" /> Kasir (POS)
+                            </button>
+                            <button onClick={() => switchTab('inventory')} className={`flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-colors ${activeTab === 'inventory' ? 'bg-zinc-100 text-zinc-900 dark:bg-zinc-800 dark:text-zinc-50 shadow-sm' : 'text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-zinc-900'}`}>
                                 <LucidePackage className="h-4 w-4" /> Inventaris
                             </button>
                             <button onClick={() => switchTab('recipes')} className={`flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-colors ${activeTab === 'recipes' ? 'bg-zinc-100 text-zinc-900 dark:bg-zinc-800 dark:text-zinc-50 shadow-sm' : 'text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-zinc-900'}`}>
                                 <LucidePlus className="h-4 w-4" /> Kalkulasi Baru
+                            </button>
+                            <button onClick={() => switchTab('recipe-list')} className={`flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-colors ${activeTab === 'recipe-list' || activeTab === 'recipe-detail' ? 'bg-zinc-100 text-zinc-900 dark:bg-zinc-800 dark:text-zinc-50 shadow-sm' : 'text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-zinc-900'}`}>
+                                <LucideBookOpen className="h-4 w-4" /> Katalog Resep
+                            </button>
+                            <button onClick={() => switchTab('sales')} className={`flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-colors ${activeTab === 'sales' ? 'bg-zinc-100 text-zinc-900 dark:bg-zinc-800 dark:text-zinc-50 shadow-sm' : 'text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-zinc-900'}`}>
+                                <LucideHistory className="h-4 w-4" /> Riwayat Sales
                             </button>
                             <p className="px-3 mb-2 mt-6 text-[10px] font-medium uppercase tracking-wider text-muted-foreground">System</p>
                             <button className="flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-zinc-900 transition-colors">
@@ -330,8 +372,15 @@ export default function Home() {
                         Dashboard
                     </button>
                     <button
-                        onClick={() => setActiveTab('ingredients')}
-                        className={`flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors ${activeTab === 'ingredients' ? 'bg-zinc-100 text-zinc-900 dark:bg-zinc-800 dark:text-zinc-50 shadow-sm' : 'text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-zinc-900'}`}
+                        onClick={() => setActiveTab('pos')}
+                        className={`flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors ${activeTab === 'pos' ? 'bg-zinc-100 text-zinc-900 dark:bg-zinc-800 dark:text-zinc-50 shadow-sm' : 'text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-zinc-900'}`}
+                    >
+                        <LucideShoppingBag className="h-4 w-4" />
+                        Kasir (POS)
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('inventory')}
+                        className={`flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors ${activeTab === 'inventory' ? 'bg-zinc-100 text-zinc-900 dark:bg-zinc-800 dark:text-zinc-50 shadow-sm' : 'text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-zinc-900'}`}
                     >
                         <LucidePackage className="h-4 w-4" />
                         Inventaris
@@ -342,6 +391,20 @@ export default function Home() {
                     >
                         <LucidePlus className="h-4 w-4" />
                         Kalkulasi Baru
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('recipe-list')}
+                        className={`flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors ${activeTab === 'recipe-list' || activeTab === 'recipe-detail' ? 'bg-zinc-100 text-zinc-900 dark:bg-zinc-800 dark:text-zinc-50 shadow-sm' : 'text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-zinc-900'}`}
+                    >
+                        <LucideBookOpen className="h-4 w-4" />
+                        Katalog Resep
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('sales')}
+                        className={`flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors ${activeTab === 'sales' ? 'bg-zinc-100 text-zinc-900 dark:bg-zinc-800 dark:text-zinc-50 shadow-sm' : 'text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-zinc-900'}`}
+                    >
+                        <LucideHistory className="h-4 w-4" />
+                        Riwayat Sales
                     </button>
 
                     <p className="px-3 mb-2 mt-6 text-[10px] font-medium uppercase tracking-wider text-muted-foreground">System</p>
@@ -413,7 +476,7 @@ export default function Home() {
                                 </div>
                             </div>
 
-                            {/* Dashboard Metrics and Actions */}
+                            {/* Dashboard Metrics */}
                             <div className="grid gap-3 grid-cols-2 lg:grid-cols-4">
                                 <div className="rounded-xl border bg-card text-card-foreground shadow-sm">
                                     <div className="p-4 md:p-6 flex flex-row items-center justify-between space-y-0 pb-2">
@@ -435,40 +498,104 @@ export default function Home() {
                                         <p className="text-xs md:text-xs text-muted-foreground mt-0.5">Telah dikalkulasi</p>
                                     </div>
                                 </div>
-                                <div className="col-span-2 rounded-xl border bg-card text-card-foreground shadow-sm overflow-hidden relative group">
-                                    <div className="flex flex-row h-full">
-                                        {/* Illustration Left */}
-                                        <div className="hidden sm:flex w-1/3 bg-zinc-100 dark:bg-zinc-900 items-center justify-center border-r relative overflow-hidden">
-                                            <div className="absolute inset-0 opacity-20 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-zinc-400 via-transparent to-transparent"></div>
-                                            <LucidePackage className="h-16 w-16 text-zinc-300 dark:text-zinc-700 transition-transform duration-500 group-hover:scale-110" strokeWidth={1.5} />
-                                        </div>
+                                <div className="rounded-xl border bg-card text-card-foreground shadow-sm">
+                                    <div className="p-4 md:p-6 flex flex-row items-center justify-between space-y-0 pb-2">
+                                        <h3 className="tracking-tight text-sm md:text-sm font-medium">Stok Menipis</h3>
+                                        <LucideAlertTriangle className="h-4 w-4 text-amber-500" />
+                                    </div>
+                                    <div className="px-4 pb-4 md:p-6 pt-0">
+                                        <div className="text-xl md:text-2xl font-bold">{lowStockIngredients.length}</div>
+                                        <p className="text-xs md:text-xs text-muted-foreground mt-0.5">Bahan butuh restock</p>
+                                    </div>
+                                </div>
+                                <div className="rounded-xl border bg-card text-card-foreground shadow-sm">
+                                    <div className="p-4 md:p-6 flex flex-row items-center justify-between space-y-0 pb-2">
+                                        <h3 className="tracking-tight text-sm md:text-sm font-medium">Saldo Kas</h3>
+                                        <div className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-1 rounded">POS</div>
+                                    </div>
+                                    <div className="px-4 pb-4 md:p-6 pt-0">
+                                        <div className="text-xl md:text-2xl font-bold">Rp {todaySales.toLocaleString('id-ID')}</div>
+                                        <p className="text-xs md:text-xs text-muted-foreground mt-0.5">Pendapatan hari ini</p>
+                                    </div>
+                                </div>
 
-                                        {/* Content Right */}
+                                <div className="col-span-2 lg:col-span-4 rounded-xl border bg-card text-card-foreground shadow-sm overflow-hidden relative group">
+                                    <div className="flex flex-row h-full">
+                                        <div className="hidden sm:flex w-1/4 bg-emerald-50 dark:bg-emerald-950/20 items-center justify-center border-r relative overflow-hidden">
+                                            <div className="absolute inset-0 opacity-20 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-emerald-400 via-transparent to-transparent"></div>
+                                            <LucidePackage className="h-16 w-16 text-emerald-300 dark:text-emerald-700 transition-transform duration-500 group-hover:scale-110" strokeWidth={1.5} />
+                                        </div>
                                         <div className="flex flex-col justify-center p-6 gap-6 flex-1">
                                             <div className="space-y-2">
-                                                <h3 className="text-base font-bold leading-none tracking-tight">Inventaris Cepat</h3>
-                                                <p className="text-sm text-muted-foreground w-full">Perbarui harga beli dari bahan baku Anda agar perhitungan margin dan HPP pada katalog selalu akurat setiap saat.</p>
+                                                <h3 className="text-base font-bold leading-none tracking-tight">Manajemen Stok</h3>
+                                                <p className="text-sm text-muted-foreground w-full text-balance text-wrap">Monitor stok live secara otomatis. Atur alarm stok menipis dan catat riwayat pembelian bahan baku.</p>
                                             </div>
                                             <button
                                                 onClick={() => setActiveTab('ingredients')}
-                                                className="w-fit h-9 rounded-md bg-zinc-900 dark:bg-zinc-50 text-white dark:text-zinc-900 text-xs font-semibold px-5 shadow transition-opacity hover:opacity-90 flex items-center justify-center gap-2"
+                                                className="w-fit h-9 rounded-md bg-emerald-600 dark:bg-emerald-50 text-white dark:text-zinc-900 text-xs font-semibold px-5 shadow transition-opacity hover:opacity-90 flex items-center justify-center gap-2"
                                             >
-                                                Manage Gudang <LucideArrowRight className="h-3.5 w-3.5" />
+                                                Buka Inventaris <LucideArrowRight className="h-3.5 w-3.5" />
                                             </button>
                                         </div>
                                     </div>
                                 </div>
                             </div>
 
-                            <div className="rounded-xl border bg-card text-card-foreground shadow-sm overflow-hidden">
+                            {lowStockIngredients.length > 0 && (
+                                <div className="rounded-xl border border-amber-200 bg-amber-50/50 dark:bg-amber-950/10 dark:border-amber-900/50 p-6 space-y-4">
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-2">
+                                            <LucideAlertTriangle className="h-5 w-5 text-amber-600" />
+                                            <h3 className="font-bold text-amber-900 dark:text-amber-100">Bahan Hampir Habis</h3>
+                                        </div>
+                                        <button onClick={() => setActiveTab('ingredients')} className="text-xs font-semibold text-amber-700 hover:underline">Lihat Semua</button>
+                                    </div>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                                        {lowStockIngredients.slice(0, 6).map(ing => (
+                                            <div key={ing.id} className="flex items-center justify-between p-3 rounded-lg bg-white dark:bg-zinc-900 border border-amber-100 dark:border-amber-900/30 shadow-sm">
+                                                <span className="text-sm font-medium">{ing.name}</span>
+                                                <div className="text-right">
+                                                    <div className="text-xs font-bold text-red-600">{ing.stock_quantity} {ing.stock_unit}</div>
+                                                    <div className="text-[10px] text-muted-foreground">Min: {ing.min_stock_alert}</div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Revenue Chart */}
+                            <RevenueChart isDemoMode={isDemoMode} />
+
+                            <div className="rounded-xl border bg-card text-card-foreground shadow-sm overflow-hidden text-wrap">
                                 <div className="flex flex-col space-y-1.5 p-5 md:p-6 pb-2 md:pb-4">
                                     <h3 className="text-base font-semibold leading-none tracking-tight">Katalog HPP Produk</h3>
                                     <p className="text-sm text-muted-foreground">Daftar resep yang telah dikalkulasi. Klik untuk melihat detail.</p>
                                 </div>
                                 <div className="overflow-x-auto">
-                                    <RecipeList onViewRecipe={handleViewRecipe} isDemoMode={isDemoMode} />
+                                    <RecipeList
+                                        onViewRecipe={handleViewRecipe}
+                                        isDemoMode={isDemoMode}
+                                        availableIngredients={ingredients}
+                                    />
                                 </div>
                             </div>
+                        </div>
+                    )}
+
+                    {activeTab === 'pos' && (
+                        <div className="animate-in fade-in duration-500">
+                            <POSPage isDemoMode={isDemoMode} />
+                        </div>
+                    )}
+
+                    {activeTab === 'inventory' && (
+                        <div className="animate-in fade-in duration-500">
+                            <InventoryPage
+                                ingredients={ingredients}
+                                onIngredientsChange={handleIngredientsChange}
+                                isDemoMode={isDemoMode}
+                            />
                         </div>
                     )}
 
@@ -491,6 +618,24 @@ export default function Home() {
                         </div>
                     )}
 
+                    {activeTab === 'recipe-list' && (
+                        <div className="animate-in fade-in duration-500">
+                            <div className="rounded-xl border bg-card text-card-foreground shadow-sm overflow-hidden">
+                                <div className="flex flex-col space-y-1.5 p-5 md:p-6 pb-2 md:pb-4">
+                                    <h2 className="text-2xl font-bold tracking-tight">Katalog Resep</h2>
+                                    <p className="text-sm text-muted-foreground">Daftar semua resep yang telah dikalkulasi. Klik untuk melihat detail.</p>
+                                </div>
+                                <div className="overflow-x-auto">
+                                    <RecipeList
+                                        onViewRecipe={handleViewRecipe}
+                                        isDemoMode={isDemoMode}
+                                        availableIngredients={ingredients}
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
                     {activeTab === 'recipe-detail' && selectedRecipeId && (
                         <RecipeDetail
                             recipeId={selectedRecipeId}
@@ -498,6 +643,12 @@ export default function Home() {
                             availableIngredients={ingredients}
                             isDemoMode={isDemoMode}
                         />
+                    )}
+
+                    {activeTab === 'sales' && (
+                        <div className="animate-in fade-in duration-500">
+                            <SalesHistoryPage isDemoMode={isDemoMode} />
+                        </div>
                     )}
                 </div>
 
@@ -511,22 +662,36 @@ export default function Home() {
                         <span className="text-[10px] font-medium">Dashboard</span>
                     </button>
                     <button
-                        onClick={() => setActiveTab('ingredients')}
-                        className={`flex flex-col items-center justify-center gap-1 flex-1 h-full transition-colors ${activeTab === 'ingredients' ? 'text-zinc-900 dark:text-zinc-50' : 'text-zinc-400'}`}
+                        onClick={() => setActiveTab('pos')}
+                        className={`flex flex-col items-center justify-center gap-1 flex-1 h-full transition-colors ${activeTab === 'pos' ? 'text-zinc-900 dark:text-zinc-50' : 'text-zinc-400'}`}
+                    >
+                        <LucideShoppingBag className="h-5 w-5" />
+                        <span className="text-[10px] font-medium">Kasir</span>
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('inventory')}
+                        className={`flex flex-col items-center justify-center gap-1 flex-1 h-full transition-colors ${activeTab === 'inventory' ? 'text-zinc-900 dark:text-zinc-50' : 'text-zinc-400'}`}
                     >
                         <LucidePackage className="h-5 w-5" />
-                        <span className="text-[10px] font-medium">Inventaris</span>
+                        <span className="text-[10px] font-medium">Stok</span>
                     </button>
                     <button
                         onClick={() => setActiveTab('recipes')}
                         className={`flex flex-col items-center justify-center gap-1 flex-1 h-full transition-colors ${activeTab === 'recipes' ? 'text-zinc-900 dark:text-zinc-50' : 'text-zinc-400'}`}
                     >
                         <LucidePlus className="h-5 w-5" />
-                        <span className="text-[10px] font-medium">Kalkulasi</span>
+                        <span className="text-[10px] font-medium">HPP</span>
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('sales')}
+                        className={`flex flex-col items-center justify-center gap-1 flex-1 h-full transition-colors ${activeTab === 'sales' ? 'text-zinc-900 dark:text-zinc-50' : 'text-zinc-400'}`}
+                    >
+                        <LucideHistory className="h-5 w-5" />
+                        <span className="text-[10px] font-medium">Riwayat</span>
                     </button>
                     <button
                         onClick={() => setActiveTab('dashboard')}
-                        className={`flex flex-col items-center justify-center gap-1 flex-1 h-full transition-colors text-zinc-400`}
+                        className={`flex flex-col items-center justify-center gap-1 flex-1 h-full transition-colors text-zinc-400 hidden sm:flex`}
                     >
                         <LucideSettings className="h-5 w-5" />
                         <span className="text-[10px] font-medium">Settings</span>
@@ -535,7 +700,7 @@ export default function Home() {
             </main>
 
             {/* Spacer for mobile bottom nav */}
-            <div className="h-16 lg:hidden" />
-        </div>
+            < div className="h-16 lg:hidden" />
+        </div >
     );
 }
