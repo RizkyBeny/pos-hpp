@@ -17,12 +17,11 @@ import { cn } from '@/lib/utils';
 import { SaleChannel, PaymentMethod } from '@/types/pos';
 
 interface CheckoutSheetProps {
-    isOpen: boolean;
     onClose: () => void;
     isDemoMode?: boolean;
 }
 
-export default function CheckoutSheet({ isOpen, onClose, isDemoMode = false }: CheckoutSheetProps) {
+export default function CheckoutSheet({ onClose, isDemoMode = false }: CheckoutSheetProps) {
     const {
         cart,
         saleChannel,
@@ -46,8 +45,6 @@ export default function CheckoutSheet({ isOpen, onClose, isDemoMode = false }: C
     const [error, setError] = useState<string | null>(null);
     const [lastTrx, setLastTrx] = useState<any>(null);
 
-    if (!isOpen) return null;
-
     const handleProcessSale = async () => {
         setLoading(true);
         setError(null);
@@ -55,7 +52,7 @@ export default function CheckoutSheet({ isOpen, onClose, isDemoMode = false }: C
             if (isDemoMode) {
                 // Simulate success in demo mode
                 await new Promise(resolve => setTimeout(resolve, 1500));
-                setLastTrx({ trx_number: `TRX-DEMO-${Math.floor(Math.random() * 10000)}` });
+                setLastTrx({ receipt_number: `TRX-DEMO-${Math.floor(Math.random() * 10000)}` });
                 setSuccess(true);
                 setTimeout(() => {
                     clearCart();
@@ -108,17 +105,11 @@ export default function CheckoutSheet({ isOpen, onClose, isDemoMode = false }: C
     };
 
     return (
-        <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center p-0 sm:p-4">
-            {/* Backdrop */}
-            <div
-                className="absolute inset-0 bg-zinc-950/60 backdrop-blur-sm transition-opacity"
-                onClick={!loading ? onClose : undefined}
-            />
-
-            {/* Content */}
+        <div className="animate-in fade-in duration-300">
+            {/* Content Container */}
             <div className={cn(
-                "relative bg-white dark:bg-zinc-900 w-full max-w-lg rounded-t-3xl sm:rounded-2xl shadow-2xl flex flex-col max-h-[95vh] animate-in slide-in-from-bottom-10 duration-300",
-                success && "border-2 border-emerald-500"
+                "relative bg-white dark:bg-zinc-900 w-full rounded-2xl border flex flex-col min-h-[60vh]",
+                success ? "border-emerald-500 ring-4 ring-emerald-500/20" : "shadow-sm"
             )}>
                 {/* Header */}
                 <div className="p-5 border-b flex items-center justify-between">
@@ -141,14 +132,14 @@ export default function CheckoutSheet({ isOpen, onClose, isDemoMode = false }: C
                         <div className="space-y-1">
                             <h3 className="text-xl font-black">Transaksi Berhasil!</h3>
                             <p className="text-sm text-zinc-500 leading-relaxed font-medium">
-                                Nomor struk: <span className="text-zinc-900 dark:text-zinc-100 font-black">{lastTrx?.trx_number}</span>
+                                Nomor struk: <span className="text-zinc-900 dark:text-zinc-100 font-black">{lastTrx?.receipt_number}</span>
                             </p>
                         </div>
-                        <p className="text-[10px] text-zinc-400 font-bold uppercase tracking-widest pt-4">Menutup otomatis...</p>
+                        <p className="text-[10px] text-zinc-400 font-bold uppercase tracking-widest pt-4">Kembali otomatis...</p>
                     </div>
                 ) : (
                     <>
-                        <div className="flex-1 overflow-y-auto p-5 space-y-6">
+                        <div className="flex-1 p-5 space-y-6">
                             {/* Sale Channel */}
                             <div className="space-y-3">
                                 <label className="text-[10px] font-black uppercase tracking-wider text-zinc-400">Saluran Penjualan</label>

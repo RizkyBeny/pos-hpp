@@ -12,11 +12,14 @@ import {
     LucideCreditCard
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import CheckoutSheet from './CheckoutSheet';
 
-export default function CartBar({ isDemoMode = false }: { isDemoMode?: boolean }) {
+interface CartBarProps {
+    isDemoMode?: boolean;
+    onCheckout: () => void;
+}
+
+export default function CartBar({ isDemoMode = false, onCheckout }: CartBarProps) {
     const [isExpanded, setIsExpanded] = useState(false);
-    const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
 
     const {
         cart,
@@ -115,20 +118,13 @@ export default function CartBar({ isDemoMode = false }: { isDemoMode?: boolean }
                     </button>
 
                     <button
-                        onClick={() => setIsCheckoutOpen(true)}
+                        onClick={onCheckout}
                         className="h-10 md:h-12 px-6 md:px-8 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-sm md:text-base shadow-lg shadow-emerald-900/20 active:scale-95 transition-all flex items-center justify-center gap-2"
                     >
                         Bayar <LucideCreditCard className="h-4 w-4 md:h-5 md:w-5" />
                     </button>
                 </div>
             </div>
-
-            {/* Checkout Sheet */}
-            <CheckoutSheet
-                isOpen={isCheckoutOpen}
-                onClose={() => setIsCheckoutOpen(false)}
-                isDemoMode={isDemoMode}
-            />
         </>
     );
 }

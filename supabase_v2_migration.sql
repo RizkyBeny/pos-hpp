@@ -17,7 +17,7 @@ CREATE INDEX IF NOT EXISTS idx_ingredients_user_stock
 CREATE TABLE IF NOT EXISTS transactions (
   id              UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id         UUID        NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  trx_number      VARCHAR(25) UNIQUE,
+  receipt_number      VARCHAR(25) UNIQUE,
   sale_channel    VARCHAR(20) NOT NULL DEFAULT 'walkin', -- walkin | whatsapp | manual
   status          VARCHAR(20) NOT NULL DEFAULT 'completed', -- completed | voided
   payment_method  VARCHAR(20), -- cash | transfer | qris | cod | null
@@ -140,7 +140,7 @@ SECURITY DEFINER
 AS $$
 DECLARE
   v_transaction_id   UUID := gen_random_uuid();
-  v_trx_number       TEXT;
+  v_receipt_number       TEXT;
   v_subtotal         DECIMAL := 0;
   v_total            DECIMAL;
   v_item             JSONB;
@@ -157,7 +157,7 @@ BEGIN
            SELECT (COUNT(*) + 1)::TEXT FROM transactions
            WHERE user_id = p_user_id AND sale_date = p_sale_date
          ), '1'), 4, '0')
-  INTO v_trx_number;
+  INTO v_receipt_number;
 
   -- Calculate subtotal
   SELECT SUM((item->>'unit_price')::DECIMAL * (item->>'quantity')::INT)
@@ -168,11 +168,11 @@ BEGIN
 
   -- Insert header
   INSERT INTO transactions (
-    id, user_id, trx_number, sale_channel, payment_method,
+    id, user_id, receipt_number, sale_channel, payment_method,
     customer_name, customer_contact, subtotal, discount, total,
     notes, sale_date, sale_time
   ) VALUES (
-    v_transaction_id, p_user_id, v_trx_number, p_sale_channel, p_payment_method,
+    v_transaction_id, p_user_id, v_receipt_number, p_sale_channel, p_payment_method,
     p_customer_name, p_customer_contact, v_subtotal, COALESCE(p_discount, 0), v_total,
     p_notes, p_sale_date, p_sale_time
   );
@@ -260,7 +260,7 @@ BEGIN
 
   RETURN jsonb_build_object(
     'transaction_id', v_transaction_id,
-    'trx_number', v_trx_number,
+    'receipt_number', v_receipt_number,
     'total', v_total,
     'stock_warnings', v_warnings,
     'skipped_deductions', v_skipped
