@@ -67,9 +67,10 @@ interface RecipeDetailProps {
     recipeId: string;
     onBack: () => void;
     availableIngredients: Ingredient[];
+    isDemoMode?: boolean;
 }
 
-export default function RecipeDetail({ recipeId, onBack, availableIngredients }: RecipeDetailProps) {
+export default function RecipeDetail({ recipeId, onBack, availableIngredients, isDemoMode = false }: RecipeDetailProps) {
     const [recipe, setRecipe] = useState<RecipeData | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isEditing, setIsEditing] = useState(false);
@@ -241,6 +242,13 @@ export default function RecipeDetail({ recipeId, onBack, availableIngredients }:
 
     const handleSaveEdit = async () => {
         if (!recipe) return;
+
+        if (isDemoMode) {
+            alert('Mode Demo: Perubahan tidak akan disimpan ke database.');
+            setIsEditing(false);
+            return;
+        }
+
         setIsSaving(true);
         try {
             // 1. Update basic recipe info
@@ -343,6 +351,12 @@ export default function RecipeDetail({ recipeId, onBack, availableIngredients }:
     const handleDelete = async () => {
         if (!recipe) return;
         if (!confirm('Hapus resep ini secara permanen?')) return;
+
+        if (isDemoMode) {
+            onBack();
+            return;
+        }
+
         try {
             const { error } = await supabase.from('recipes').delete().eq('id', recipe.id);
             if (error) throw error;

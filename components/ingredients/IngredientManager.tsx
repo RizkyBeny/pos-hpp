@@ -20,9 +20,14 @@ export const UNIT_OPTIONS: Unit[] = ['kg', 'gr', 'L', 'ml', 'pcs', 'pack', 'lusi
 interface IngredientManagerProps {
     initialIngredients?: Ingredient[];
     onIngredientsChange?: (ingredients: Ingredient[]) => void;
+    isDemoMode?: boolean;
 }
 
-export default function IngredientManager({ initialIngredients = [], onIngredientsChange }: IngredientManagerProps) {
+export default function IngredientManager({
+    initialIngredients = [],
+    onIngredientsChange,
+    isDemoMode = false
+}: IngredientManagerProps) {
     const [ingredients, setIngredients] = useState<Ingredient[]>(initialIngredients);
     const [isAdding, setIsAdding] = useState(false);
     const [editingId, setEditingId] = useState<string | null>(null);
@@ -51,6 +56,22 @@ export default function IngredientManager({ initialIngredients = [], onIngredien
 
         setIsSubmitting(true);
         try {
+            if (isDemoMode) {
+                // In demo mode, just update local state
+                const newIng: Ingredient = {
+                    id: Math.random().toString(36).substr(2, 9),
+                    ...formData
+                };
+                const newIngredients = [...ingredients, newIng];
+                setIngredients(newIngredients);
+                onIngredientsChange?.(newIngredients);
+                setFormData({ name: '', buyPrice: 0, buyUnit: 'kg', buyQuantity: 1, weightPerUnit: 0 });
+                setIsAdding(false);
+                setStatusMsg({ type: 'success', text: 'Bahan baku berhasil ditambahkan (Demo).' });
+                setTimeout(() => setStatusMsg(null), 3000);
+                return;
+            }
+
             const { data, error } = await supabase
                 .from('ingredients')
                 .insert([{
@@ -99,6 +120,17 @@ export default function IngredientManager({ initialIngredients = [], onIngredien
 
         setIsSubmitting(true);
         try {
+            if (isDemoMode) {
+                const newIngredients = ingredients.map(ing => ing.id === editingId ? { ...formData, id: editingId } : ing);
+                setIngredients(newIngredients);
+                onIngredientsChange?.(newIngredients);
+                setEditingId(null);
+                setFormData({ name: '', buyPrice: 0, buyUnit: 'kg', buyQuantity: 1, weightPerUnit: 0 });
+                setStatusMsg({ type: 'success', text: 'Perubahan berhasil disimpan (Demo).' });
+                setTimeout(() => setStatusMsg(null), 3000);
+                return;
+            }
+
             const { error } = await supabase
                 .from('ingredients')
                 .update({
@@ -143,6 +175,15 @@ export default function IngredientManager({ initialIngredients = [], onIngredien
         setStatusMsg(null);
 
         try {
+            if (isDemoMode) {
+                const newIngredients = ingredients.filter(ing => ing.id !== id);
+                setIngredients(newIngredients);
+                onIngredientsChange?.(newIngredients);
+                setStatusMsg({ type: 'success', text: `Bahan "${name}" berhasil dihapus (Demo).` });
+                setTimeout(() => setStatusMsg(null), 3000);
+                return;
+            }
+
             // Check if ingredient is used in any recipe
             const { data: usageData, error: usageError } = await supabase
                 .from('recipe_ingredients')

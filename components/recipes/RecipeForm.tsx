@@ -42,9 +42,10 @@ interface OverheadItem {
 
 interface RecipeFormProps {
     availableIngredients: Ingredient[];
+    isDemoMode?: boolean;
 }
 
-export default function RecipeForm({ availableIngredients }: RecipeFormProps) {
+export default function RecipeForm({ availableIngredients, isDemoMode = false }: RecipeFormProps) {
     const [recipeName, setRecipeName] = useState('');
     const [category, setCategory] = useState<RecipeCategory>('Makanan');
     const [portions, setPortions] = useState(1);
@@ -58,6 +59,12 @@ export default function RecipeForm({ availableIngredients }: RecipeFormProps) {
 
     const handleSaveRecipe = async () => {
         if (!recipeName) return alert('Nama produk harus diisi.');
+
+        if (isDemoMode) {
+            alert('Mode Demo: Kalkulasi Anda berhasil dilakukan, namun data tidak disimpan ke database. Silakan daftar akun untuk menyimpan resep secara permanen.');
+            return;
+        }
+
         setIsSubmitting(true);
 
         try {

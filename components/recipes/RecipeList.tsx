@@ -24,14 +24,20 @@ interface SavedRecipe {
 
 interface RecipeListProps {
     onViewRecipe?: (recipeId: string) => void;
+    isDemoMode?: boolean;
 }
 
-export default function RecipeList({ onViewRecipe }: RecipeListProps) {
+export default function RecipeList({ onViewRecipe, isDemoMode = false }: RecipeListProps) {
     const [recipes, setRecipes] = useState<SavedRecipe[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
     const fetchRecipes = async () => {
+        if (isDemoMode) {
+            setRecipes([]);
+            setIsLoading(false);
+            return;
+        }
         setIsLoading(true);
         try {
             const { data, error } = await supabase

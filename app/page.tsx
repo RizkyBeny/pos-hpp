@@ -76,22 +76,23 @@ export default function Home() {
     useEffect(() => {
         const fetchData = async () => {
             if (!isAuthenticated && !isDemoMode) return;
-            setIsLoading(true);
 
+            // If in demo mode, always start with empty data as requested
+            if (isDemoMode) {
+                setIngredients([]);
+                setRecipeCount(0);
+                setIsLoading(false);
+                return;
+            }
+
+            setIsLoading(true);
             try {
-                // ... same fetch logic
                 const { data, error } = await supabase
                     .from('ingredients')
                     .select('*')
                     .order('created_at', { ascending: false });
 
-                if (error) {
-                    // In demo mode, we might get RLS errors if not logged in.
-                    // We can either ignore them or show mock data.
-                    // For now, let's just not crash.
-                    console.log('Database fetch ignored or failed (Demo mode?):', error.message);
-                }
-
+                if (error) throw error;
                 if (data) {
                     const mappedData: Ingredient[] = data.map(item => ({
                         id: item.id,
@@ -117,9 +118,7 @@ export default function Home() {
             }
         };
 
-        if (isAuthenticated || isDemoMode) {
-            fetchData();
-        }
+        fetchData();
     }, [isAuthenticated, isDemoMode]);
 
     const handleIngredientsChange = (newIngs: Ingredient[]) => {
@@ -467,7 +466,7 @@ export default function Home() {
                                     <p className="text-sm text-muted-foreground">Daftar resep yang telah dikalkulasi. Klik untuk melihat detail.</p>
                                 </div>
                                 <div className="overflow-x-auto">
-                                    <RecipeList onViewRecipe={handleViewRecipe} />
+                                    <RecipeList onViewRecipe={handleViewRecipe} isDemoMode={isDemoMode} />
                                 </div>
                             </div>
                         </div>
@@ -475,18 +474,30 @@ export default function Home() {
 
                     {activeTab === 'ingredients' && (
                         <div className="animate-in fade-in duration-500">
-                            <IngredientManager onIngredientsChange={handleIngredientsChange} initialIngredients={ingredients} />
+                            <IngredientManager
+                                onIngredientsChange={handleIngredientsChange}
+                                initialIngredients={ingredients}
+                                isDemoMode={isDemoMode}
+                            />
                         </div>
                     )}
 
                     {activeTab === 'recipes' && (
                         <div className="animate-in fade-in duration-500">
-                            <RecipeForm availableIngredients={ingredients} />
+                            <RecipeForm
+                                availableIngredients={ingredients}
+                                isDemoMode={isDemoMode}
+                            />
                         </div>
                     )}
 
                     {activeTab === 'recipe-detail' && selectedRecipeId && (
-                        <RecipeDetail recipeId={selectedRecipeId} onBack={handleBackFromDetail} availableIngredients={ingredients} />
+                        <RecipeDetail
+                            recipeId={selectedRecipeId}
+                            onBack={handleBackFromDetail}
+                            availableIngredients={ingredients}
+                            isDemoMode={isDemoMode}
+                        />
                     )}
                 </div>
 
