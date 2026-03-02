@@ -678,27 +678,27 @@ export default function RecipeDetail({ recipeId, onBack, availableIngredients, i
                                         <div className="space-y-2 pt-2">
                                             <div className="flex justify-between items-center mb-1">
                                                 <label className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Margin Profit (%)</label>
-                                                <span className="text-sm font-black text-emerald-600 dark:text-emerald-400">{editForm.margin_percentage}%</span>
+                                                <span className="text-sm font-black">{editForm.margin_percentage}%</span>
                                             </div>
                                             <div className="flex items-center gap-3">
                                                 <input
                                                     type="range"
                                                     min="0" max="500" step="5"
-                                                    className="flex-1 h-2 accent-emerald-600 cursor-pointer"
+                                                    className="flex-1 h-2 accent-zinc-900 dark:accent-zinc-100 cursor-pointer"
                                                     value={editForm.margin_percentage}
                                                     onChange={e => setEditForm({ ...editForm, margin_percentage: Number(e.target.value) })}
                                                 />
                                             </div>
                                         </div>
                                         <div className="pt-4 mt-2 border-t border-dashed">
-                                            <label className="flex items-center gap-3 p-3 rounded-lg border bg-emerald-50/50 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-800 cursor-pointer hover:bg-emerald-50 dark:hover:bg-emerald-950/30 transition-colors">
+                                            <label className="flex items-center gap-3 p-3 rounded-lg border bg-secondary/50 border-border cursor-pointer hover:bg-secondary transition-colors">
                                                 <div className="flex-1">
-                                                    <p className="text-sm font-bold text-emerald-900 dark:text-emerald-100">Tampilkan di Menu Kasir</p>
-                                                    <p className="text-[10px] text-emerald-700/70 dark:text-emerald-300/50">Menu ini akan muncul secara otomatis di halaman POS</p>
+                                                    <p className="text-sm font-bold">Tampilkan di Menu Kasir</p>
+                                                    <p className="text-[10px] text-muted-foreground">Menu ini akan muncul secara otomatis di halaman POS</p>
                                                 </div>
                                                 <input
                                                     type="checkbox"
-                                                    className="h-5 w-5 rounded border-zinc-300 text-emerald-600 focus:ring-emerald-600 cursor-pointer"
+                                                    className="h-5 w-5 rounded border-input text-foreground focus:ring-ring cursor-pointer"
                                                     checked={editForm.is_menu_item}
                                                     onChange={e => setEditForm({ ...editForm, is_menu_item: e.target.checked })}
                                                 />
@@ -746,13 +746,13 @@ export default function RecipeDetail({ recipeId, onBack, availableIngredients, i
                                                 <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground flex items-center gap-2">
                                                     <LucideZap className="h-3 w-3" /> HPP Per Porsi
                                                 </p>
-                                                <p className="text-lg font-bold text-emerald-600 dark:text-emerald-400">Rp {(recipe.total_hpp! / recipe.portions).toLocaleString('id-ID')}</p>
+                                                <p className="text-xl font-black italic">Rp {(recipe.total_hpp! / recipe.portions).toLocaleString('id-ID')}</p>
                                             </div>
                                             <div className="space-y-1">
                                                 <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground flex items-center gap-2">
                                                     <LucideTrendingUp className="h-3 w-3" /> Selling Price
                                                 </p>
-                                                <p className="text-lg font-bold text-blue-600 dark:text-blue-400">Rp {Math.ceil((recipe.total_hpp! / recipe.portions) * (1 + recipe.margin_percentage / 100) / 100 * 100).toLocaleString('id-ID')}</p>
+                                                <p className="text-xl font-black">Rp {Math.ceil((recipe.total_hpp! / recipe.portions) * (1 + recipe.margin_percentage / 100) / 100 * 100).toLocaleString('id-ID')}</p>
                                             </div>
                                             <div className="space-y-1">
                                                 <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground flex items-center gap-2">
@@ -764,11 +764,11 @@ export default function RecipeDetail({ recipeId, onBack, availableIngredients, i
 
                                         <div className="pt-2">
                                             {recipe.is_menu_item ? (
-                                                <span className="inline-flex items-center gap-2 rounded-full bg-emerald-50 dark:bg-emerald-950/30 px-3 py-1 text-[11px] font-black text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
+                                                <span className="inline-flex items-center gap-2 rounded-full bg-secondary px-3 py-1 text-[11px] font-black border">
                                                     <LucideStore className="h-3 w-3" /> AKTIF DI POS (MENU KASIR)
                                                 </span>
                                             ) : (
-                                                <span className="inline-flex items-center gap-2 rounded-full bg-zinc-100 dark:bg-zinc-800/50 px-3 py-1 text-[11px] font-black text-zinc-500 border border-transparent">
+                                                <span className="inline-flex items-center gap-2 rounded-full bg-muted/50 px-3 py-1 text-[11px] font-black text-muted-foreground border border-dashed">
                                                     <LucideX className="h-3 w-3" /> HANYA KALKULASI INTERNAL
                                                 </span>
                                             )}

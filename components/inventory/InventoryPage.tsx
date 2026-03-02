@@ -31,44 +31,44 @@ export default function InventoryPage({ ingredients, onIngredientsChange, isDemo
             </div>
 
             {/* Stats Overview */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div className="p-4 rounded-2xl border bg-card shadow-sm flex items-center gap-4">
-                    <div className="h-12 w-12 rounded-xl bg-blue-50 dark:bg-blue-950/30 flex items-center justify-center text-blue-600 dark:text-blue-400">
-                        <LucidePackage className="h-6 w-6" />
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="rounded-xl border bg-card text-card-foreground shadow-sm">
+                    <div className="p-6 flex flex-row items-center justify-between space-y-0 pb-2">
+                        <h3 className="tracking-tight text-sm font-medium">Total Bahan</h3>
+                        <LucidePackage className="h-4 w-4 text-muted-foreground" />
                     </div>
-                    <div>
-                        <p className="text-sm text-muted-foreground">Total Bahan</p>
-                        <p className="text-2xl font-bold">{ingredients.length}</p>
-                    </div>
-                </div>
-
-                <div className="p-4 rounded-2xl border bg-card shadow-sm flex items-center gap-4">
-                    <div className="h-12 w-12 rounded-xl bg-amber-50 dark:bg-amber-950/30 flex items-center justify-center text-amber-600 dark:text-amber-400">
-                        <LucideTrendingDown className="h-6 w-6" />
-                    </div>
-                    <div>
-                        <p className="text-sm text-muted-foreground">Hampir Habis</p>
-                        <p className="text-2xl font-bold">{lowStockCount}</p>
+                    <div className="p-6 pt-0">
+                        <div className="text-2xl font-bold">{ingredients.length}</div>
                     </div>
                 </div>
 
-                <div className="p-4 rounded-2xl border bg-card shadow-sm flex items-center gap-4">
-                    <div className="h-12 w-12 rounded-xl bg-red-50 dark:bg-red-950/30 flex items-center justify-center text-red-600 dark:text-red-400">
-                        <LucideAlertTriangle className="h-6 w-6" />
+                <div className="rounded-xl border bg-card text-card-foreground shadow-sm">
+                    <div className="p-6 flex flex-row items-center justify-between space-y-0 pb-2">
+                        <h3 className="tracking-tight text-sm font-medium">Hampir Habis</h3>
+                        <LucideTrendingDown className="h-4 w-4 text-amber-500" />
                     </div>
-                    <div>
-                        <p className="text-sm text-muted-foreground">Belum Set Stok</p>
-                        <p className="text-2xl font-bold">{uninitializedCount}</p>
+                    <div className="p-6 pt-0">
+                        <div className="text-2xl font-bold text-amber-600">{lowStockCount}</div>
                     </div>
                 </div>
 
-                <div className="p-4 rounded-2xl border bg-card shadow-sm flex items-center gap-4">
-                    <div className="h-12 w-12 rounded-xl bg-purple-50 dark:bg-purple-950/30 flex items-center justify-center text-purple-600 dark:text-purple-400">
-                        <LucideHistory className="h-6 w-6" />
+                <div className="rounded-xl border bg-card text-card-foreground shadow-sm">
+                    <div className="p-6 flex flex-row items-center justify-between space-y-0 pb-2">
+                        <h3 className="tracking-tight text-sm font-medium">Belum Set Stok</h3>
+                        <LucideAlertTriangle className="h-4 w-4 text-red-500" />
                     </div>
-                    <div>
-                        <p className="text-sm text-muted-foreground">Update Terakhir</p>
-                        <p className="text-xs font-semibold mt-1">Hari Ini</p>
+                    <div className="p-6 pt-0">
+                        <div className="text-2xl font-bold text-red-600">{uninitializedCount}</div>
+                    </div>
+                </div>
+
+                <div className="rounded-xl border bg-card text-card-foreground shadow-sm">
+                    <div className="p-6 flex flex-row items-center justify-between space-y-0 pb-2">
+                        <h3 className="tracking-tight text-sm font-medium">Update Terakhir</h3>
+                        <LucideHistory className="h-4 w-4 text-muted-foreground" />
+                    </div>
+                    <div className="p-6 pt-0">
+                        <div className="text-lg font-bold">Hari Ini</div>
                     </div>
                 </div>
             </div>

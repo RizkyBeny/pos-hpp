@@ -108,51 +108,59 @@ export default function CheckoutSheet({ onClose, isDemoMode = false }: CheckoutS
         <div className="animate-in fade-in duration-300">
             {/* Content Container */}
             <div className={cn(
-                "relative bg-white dark:bg-zinc-900 w-full rounded-2xl border flex flex-col min-h-[60vh]",
-                success ? "border-emerald-500 ring-4 ring-emerald-500/20" : "shadow-sm"
+                "relative bg-card w-full rounded-lg border flex flex-col min-h-[70vh] shadow-lg animate-in fade-in zoom-in-95 duration-500",
+                success ? "border-zinc-200 dark:border-zinc-800" : ""
             )}>
                 {/* Header */}
-                <div className="p-5 border-b flex items-center justify-between">
-                    <div>
-                        <h2 className="text-xl font-black">Checkout</h2>
-                        <p className="text-xs text-zinc-400 font-medium">Selesaikan transaksi pelanggan</p>
+                <div className="p-6 border-b flex items-center justify-between">
+                    <div className="space-y-1">
+                        <h2 className="text-xl font-bold tracking-tight">Checkout</h2>
+                        <p className="text-sm text-muted-foreground font-medium">Lengkapi detail transaksi pelanggan</p>
                     </div>
                     {!loading && !success && (
-                        <button onClick={onClose} className="h-10 w-10 flex items-center justify-center rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors">
-                            <LucideX className="h-5 w-5" />
+                        <button onClick={onClose} className="h-9 w-9 flex items-center justify-center rounded-md border border-input bg-background hover:bg-accent hover:text-accent-foreground transition-colors">
+                            <LucideX className="h-4 w-4" />
                         </button>
                     )}
                 </div>
 
                 {success ? (
-                    <div className="p-10 flex flex-col items-center justify-center text-center space-y-4">
-                        <div className="h-20 w-20 bg-emerald-100 dark:bg-emerald-950/30 rounded-full flex items-center justify-center text-emerald-600 animate-bounce">
-                            <LucideCheckCircle2 className="h-10 w-10" />
+                    <div className="p-12 flex flex-col items-center justify-center text-center space-y-6 animate-in zoom-in-95 duration-500">
+                        <div className="h-16 w-16 bg-zinc-100 dark:bg-zinc-800 rounded-full flex items-center justify-center text-zinc-900 dark:text-zinc-50 border shadow-sm">
+                            <LucideCheckCircle2 className="h-8 w-8" />
                         </div>
-                        <div className="space-y-1">
-                            <h3 className="text-xl font-black">Transaksi Berhasil!</h3>
-                            <p className="text-sm text-zinc-500 leading-relaxed font-medium">
-                                Nomor struk: <span className="text-zinc-900 dark:text-zinc-100 font-black">{lastTrx?.receipt_number}</span>
+                        <div className="space-y-2">
+                            <h3 className="text-2xl font-bold tracking-tight">Transaksi Berhasil</h3>
+                            <p className="text-sm text-muted-foreground font-medium">
+                                Struk: <span className="text-foreground font-bold">{lastTrx?.receipt_number}</span>
                             </p>
                         </div>
-                        <p className="text-[10px] text-zinc-400 font-bold uppercase tracking-widest pt-4">Kembali otomatis...</p>
+                        <div className="pt-4 flex flex-col items-center gap-2">
+                            <div className="flex gap-2">
+                                <button className="h-10 px-4 rounded-md bg-zinc-900 text-zinc-50 text-sm font-bold flex items-center gap-2">
+                                    <LucideReceipt className="h-4 w-4" /> Print Struk
+                                </button>
+                                <button onClick={onClose} className="h-10 px-4 rounded-md border text-sm font-bold">Tutup</button>
+                            </div>
+                            <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-widest pt-2">Menu ditutup otomatis...</p>
+                        </div>
                     </div>
                 ) : (
                     <>
-                        <div className="flex-1 p-5 space-y-6">
+                        <div className="flex-1 p-6 space-y-8 overflow-y-auto">
                             {/* Sale Channel */}
-                            <div className="space-y-3">
-                                <label className="text-[10px] font-black uppercase tracking-wider text-zinc-400">Saluran Penjualan</label>
-                                <div className="grid grid-cols-3 gap-2">
+                            <div className="space-y-4">
+                                <label className="text-xs font-bold text-zinc-500 dark:text-zinc-400">Saluran Penjualan</label>
+                                <div className="grid grid-cols-3 gap-2 p-1 bg-zinc-100 dark:bg-zinc-800 rounded-md">
                                     {(['walkin', 'whatsapp', 'manual'] as SaleChannel[]).map((channel) => (
                                         <button
                                             key={channel}
                                             onClick={() => setSaleChannel(channel)}
                                             className={cn(
-                                                "py-3 rounded-xl border text-[10px] font-black uppercase transition-all",
+                                                "py-2 rounded-sm text-xs font-bold transition-all",
                                                 saleChannel === channel
-                                                    ? "bg-emerald-600 border-emerald-600 text-white shadow-lg shadow-emerald-900/10"
-                                                    : "bg-white dark:bg-zinc-800 border-zinc-100 dark:border-zinc-700 text-zinc-500 hover:border-zinc-300"
+                                                    ? "bg-white dark:bg-zinc-900 text-zinc-950 dark:text-zinc-50 shadow-sm"
+                                                    : "text-zinc-500 hover:text-zinc-900"
                                             )}
                                         >
                                             {channel === 'walkin' ? 'Walk-in' : channel === 'whatsapp' ? 'WhatsApp' : 'Manual'}
@@ -162,18 +170,18 @@ export default function CheckoutSheet({ onClose, isDemoMode = false }: CheckoutS
                             </div>
 
                             {/* Payment Method */}
-                            <div className="space-y-3">
-                                <label className="text-[10px] font-black uppercase tracking-wider text-zinc-400">Metode Pembayaran</label>
+                            <div className="space-y-4">
+                                <label className="text-xs font-bold text-zinc-500 dark:text-zinc-400">Metode Pembayaran</label>
                                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                                     {(['cash', 'transfer', 'qris', 'cod'] as PaymentMethod[]).map((method) => (
                                         <button
                                             key={method}
                                             onClick={() => setPaymentMethod(method)}
                                             className={cn(
-                                                "py-3 rounded-xl border text-[10px] font-black uppercase transition-all",
+                                                "py-2.5 rounded-md border text-xs font-bold uppercase transition-all",
                                                 paymentMethod === method
-                                                    ? "bg-emerald-600 border-emerald-600 text-white shadow-lg shadow-emerald-900/10"
-                                                    : "bg-white dark:bg-zinc-800 border-zinc-100 dark:border-zinc-700 text-zinc-500 hover:border-zinc-300"
+                                                    ? "bg-zinc-900 text-zinc-50 border-zinc-900 dark:bg-zinc-50 dark:text-zinc-950 dark:border-zinc-50 shadow-sm"
+                                                    : "bg-background border-input hover:bg-zinc-50 dark:hover:bg-zinc-800"
                                             )}
                                         >
                                             {method}
@@ -183,25 +191,25 @@ export default function CheckoutSheet({ onClose, isDemoMode = false }: CheckoutS
                             </div>
 
                             {/* Customer Info */}
-                            <div className="space-y-3">
-                                <label className="text-[10px] font-black uppercase tracking-wider text-zinc-400">Informasi Pelanggan</label>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div className="space-y-4">
+                                <label className="text-xs font-bold text-zinc-500 dark:text-zinc-400">Informasi Pelanggan</label>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <div className="relative">
-                                        <LucideUser className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-zinc-400" />
+                                        <LucideUser className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                                         <input
                                             type="text"
                                             placeholder="Nama Pelanggan"
-                                            className="w-full bg-zinc-50 dark:bg-zinc-800 border-none rounded-xl py-3 pl-9 pr-4 text-xs font-bold outline-none focus:ring-1 focus:ring-emerald-500 transition-all"
+                                            className="w-full h-10 bg-background border rounded-md pl-10 pr-4 text-sm focus-visible:ring-1 focus-visible:ring-ring outline-none transition-all"
                                             value={customerName}
                                             onChange={(e) => setCustomerInfo(e.target.value, customerContact)}
                                         />
                                     </div>
                                     <div className="relative">
-                                        <LucidePhone className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-zinc-400" />
+                                        <LucidePhone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                                         <input
                                             type="text"
                                             placeholder="WhatsApp / Phone"
-                                            className="w-full bg-zinc-50 dark:bg-zinc-800 border-none rounded-xl py-3 pl-9 pr-4 text-xs font-bold outline-none focus:ring-1 focus:ring-emerald-500 transition-all"
+                                            className="w-full h-10 bg-background border rounded-md pl-10 pr-4 text-sm focus-visible:ring-1 focus-visible:ring-ring outline-none transition-all"
                                             value={customerContact}
                                             onChange={(e) => setCustomerInfo(customerName, e.target.value)}
                                         />
@@ -210,25 +218,25 @@ export default function CheckoutSheet({ onClose, isDemoMode = false }: CheckoutS
                             </div>
 
                             {/* Discount & Notes */}
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <div className="space-y-3">
-                                    <label className="text-[10px] font-black uppercase tracking-wider text-zinc-400">Potongan Harga</label>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                                <div className="space-y-4">
+                                    <label className="text-xs font-bold text-zinc-500 dark:text-zinc-400">Potongan Harga</label>
                                     <div className="relative">
-                                        <div className="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] font-black text-zinc-400">Rp</div>
+                                        <div className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-muted-foreground mr-1">Rp</div>
                                         <input
                                             type="number"
                                             placeholder="0"
-                                            className="w-full bg-zinc-50 dark:bg-zinc-800 border-none rounded-xl py-3 pl-9 pr-4 text-xs font-bold outline-none focus:ring-1 focus:ring-emerald-500 transition-all"
+                                            className="w-full h-10 bg-background border rounded-md pl-10 pr-4 text-sm focus-visible:ring-1 focus-visible:ring-ring outline-none transition-all"
                                             value={discount || ''}
                                             onChange={(e) => setDiscount(Number(e.target.value))}
                                         />
                                     </div>
                                 </div>
-                                <div className="space-y-3">
-                                    <label className="text-[10px] font-black uppercase tracking-wider text-zinc-400">Catatan Pesanan</label>
+                                <div className="space-y-4">
+                                    <label className="text-xs font-bold text-zinc-500 dark:text-zinc-400">Catatan Pesanan</label>
                                     <textarea
                                         placeholder="Ekstra pedas, dll..."
-                                        className="w-full bg-zinc-50 dark:bg-zinc-800 border-none rounded-xl py-2.5 px-4 text-xs font-bold outline-none focus:ring-1 focus:ring-emerald-500 transition-all h-[42px] resize-none"
+                                        className="w-full h-10 bg-background border rounded-md px-4 py-2 text-sm focus-visible:ring-1 focus-visible:ring-ring outline-none transition-all resize-none"
                                         value={notes}
                                         onChange={(e) => setNotes(e.target.value)}
                                     />
@@ -236,19 +244,20 @@ export default function CheckoutSheet({ onClose, isDemoMode = false }: CheckoutS
                             </div>
 
                             {/* Order Summary */}
-                            <div className="bg-zinc-900 border rounded-2xl p-4 text-white space-y-3 shadow-xl">
-                                <div className="flex items-center justify-between text-[11px] font-bold opacity-60 uppercase tracking-widest">
-                                    <span>Subtotal ({cart.reduce((s, i) => s + i.quantity, 0)} pcs)</span>
-                                    <span>Rp {getSubtotal().toLocaleString('id-ID')}</span>
-                                </div>
-                                <div className="flex items-center justify-between text-[11px] font-bold text-red-400 uppercase tracking-widest">
-                                    <span>Diskon</span>
-                                    <span>- Rp {discount.toLocaleString('id-ID')}</span>
-                                </div>
-                                <div className="h-px bg-white/10 my-2"></div>
-                                <div className="flex items-center justify-between">
-                                    <span className="text-sm font-black uppercase tracking-widest">Total Bayar</span>
-                                    <span className="text-2xl font-black">Rp {getTotal().toLocaleString('id-ID')}</span>
+                            <div className="rounded-lg border bg-card text-card-foreground shadow-sm">
+                                <div className="p-6 space-y-4">
+                                    <div className="flex items-center justify-between text-sm">
+                                        <span className="text-muted-foreground">Subtotal ({cart.reduce((s, i) => s + i.quantity, 0)} produk)</span>
+                                        <span className="font-medium">Rp {getSubtotal().toLocaleString('id-ID')}</span>
+                                    </div>
+                                    <div className="flex items-center justify-between text-sm">
+                                        <span className="text-muted-foreground">Diskon</span>
+                                        <span className="font-medium text-red-500">- Rp {discount.toLocaleString('id-ID')}</span>
+                                    </div>
+                                    <div className="border-t pt-4 flex items-center justify-between">
+                                        <span className="text-base font-bold">Total Pembayaran</span>
+                                        <span className="text-2xl font-bold tracking-tight">Rp {getTotal().toLocaleString('id-ID')}</span>
+                                    </div>
                                 </div>
                             </div>
 
@@ -261,21 +270,21 @@ export default function CheckoutSheet({ onClose, isDemoMode = false }: CheckoutS
                         </div>
 
                         {/* Footer Actions */}
-                        <div className="p-5 border-t bg-zinc-50/50 dark:bg-emerald-950/5">
+                        <div className="p-6 border-t bg-muted/30">
                             <button
                                 onClick={handleProcessSale}
                                 disabled={loading || cart.length === 0}
-                                className="w-full h-14 rounded-2xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed text-white text-base font-black shadow-xl shadow-emerald-900/20 active:scale-[0.98] transition-all flex items-center justify-center gap-3"
+                                className="w-full h-12 rounded-md bg-zinc-900 hover:bg-zinc-800 dark:bg-zinc-50 dark:text-zinc-950 dark:hover:bg-zinc-200 disabled:opacity-50 disabled:cursor-not-allowed text-zinc-50 text-sm font-bold shadow-sm transition-all flex items-center justify-center gap-3"
                             >
                                 {loading ? (
                                     <>
-                                        <LucideLoader2 className="h-5 w-5 animate-spin" />
-                                        Memproses...
+                                        <LucideLoader2 className="h-4 w-4 animate-spin" />
+                                        Sedang memproses...
                                     </>
                                 ) : (
                                     <>
-                                        Bayar Sekarang
-                                        <LucideReceipt className="h-5 w-5" />
+                                        Konfirmasi Pembayaran
+                                        <LucideReceipt className="h-4 w-4" />
                                     </>
                                 )}
                             </button>

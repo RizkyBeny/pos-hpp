@@ -119,14 +119,13 @@ export default function RevenueChart({ isDemoMode = false }: RevenueChartProps) 
 
     return (
         <div className="rounded-xl border bg-card text-card-foreground shadow-sm w-full">
-            <div className="flex flex-col space-y-1.5 p-6 border-b">
+            <div className="flex flex-col space-y-1.5 p-6">
                 <div className="flex items-center justify-between">
                     <div>
-                        <h3 className="flex items-center gap-2 font-semibold leading-none tracking-tight">
-                            <LucideTrendingUp className="h-4 w-4 text-emerald-500" />
+                        <h3 className="tracking-tight text-base font-semibold">
                             Tren Penjualan (7 Hari)
                         </h3>
-                        <p className="text-sm text-muted-foreground mt-1">Pendapatan & Gross Profit</p>
+                        <p className="text-sm text-muted-foreground">Pendapatan & Gross Profit</p>
                     </div>
                 </div>
             </div>
@@ -136,12 +135,12 @@ export default function RevenueChart({ isDemoMode = false }: RevenueChartProps) 
                         <AreaChart data={data} margin={{ top: 5, right: 0, left: 0, bottom: 0 }}>
                             <defs>
                                 <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.3} />
-                                    <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
+                                    <stop offset="5%" stopColor="#09090b" stopOpacity={0.1} />
+                                    <stop offset="95%" stopColor="#09090b" stopOpacity={0} />
                                 </linearGradient>
                                 <linearGradient id="colorProfit" x1="0" y1="0" x2="0" y2="1">
-                                    <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
-                                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
+                                    <stop offset="5%" stopColor="#71717a" stopOpacity={0.1} />
+                                    <stop offset="95%" stopColor="#71717a" stopOpacity={0} />
                                 </linearGradient>
                             </defs>
                             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" className="dark:stroke-zinc-800" />
@@ -165,16 +164,16 @@ export default function RevenueChart({ isDemoMode = false }: RevenueChartProps) 
                             <Area
                                 type="monotone"
                                 dataKey="revenue"
-                                stroke="#10b981"
-                                strokeWidth={3}
+                                stroke="#09090b"
+                                strokeWidth={2}
                                 fillOpacity={1}
                                 fill="url(#colorRevenue)"
                             />
                             <Area
                                 type="monotone"
                                 dataKey="profit"
-                                stroke="#3b82f6"
-                                strokeWidth={3}
+                                stroke="#71717a"
+                                strokeWidth={2}
                                 fillOpacity={1}
                                 fill="url(#colorProfit)"
                             />

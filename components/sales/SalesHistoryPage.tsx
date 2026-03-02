@@ -155,98 +155,110 @@ export default function SalesHistoryPage({ isDemoMode = false }: SalesHistoryPag
     return (
         <div className="flex flex-col h-full space-y-6 animate-in fade-in duration-500">
             {/* Header */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div>
-                    <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">Riwayat Penjualan</h2>
-                    <p className="text-sm text-muted-foreground font-medium">Lacak semua transaksi dan pantau performa historis</p>
+            <div className="flex flex-row items-center justify-between gap-2 mb-1">
+                <div className="min-w-0">
+                    <h2 className="text-xl sm:text-2xl font-bold tracking-tight truncate">Riwayat</h2>
+                    <p className="text-[10px] sm:text-xs text-muted-foreground font-medium truncate">Pantau performa historis</p>
                 </div>
 
-                <div className="flex flex-wrap items-center gap-2 mt-2 md:mt-0">
+                <div className="flex items-center gap-1.5 shrink-0">
                     <button
                         onClick={handleExportCSV}
-                        className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-zinc-900 border rounded-xl text-xs sm:text-sm font-bold hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors flex-1 md:flex-none justify-center"
+                        className="inline-flex h-9 items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium shadow-sm hover:bg-accent hover:text-accent-foreground transition-colors disabled:opacity-50"
                     >
-                        <LucideDownload className="h-4 w-4 shrink-0" />
-                        Export
+                        <LucideDownload className="h-4 w-4 mr-2" />
+                        <span className="hidden xs:inline">Export</span>
                     </button>
-                    <button className="flex items-center gap-2 px-4 py-2 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 rounded-xl text-xs sm:text-sm font-bold shadow-md hover:opacity-90 transition-opacity flex-1 md:flex-none justify-center">
-                        <LucideCalendarDays className="h-4 w-4 shrink-0" />
-                        Hari Ini
+                    <button className="inline-flex h-9 items-center justify-center rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white shadow hover:opacity-90 dark:bg-zinc-50 dark:text-zinc-900 transition-opacity">
+                        <LucideCalendarDays className="h-4 w-4 mr-2" />
+                        <span className="hidden xs:inline">Hari Ini</span>
                     </button>
                 </div>
             </div>
 
-            {/* Quick Stats */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div className="bg-white dark:bg-zinc-900 border rounded-2xl p-5 shadow-sm border-emerald-100 dark:border-emerald-900/30">
-                    <div className="flex items-center gap-3 mb-2">
-                        <div className="h-8 w-8 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center text-emerald-600">
-                            <LucideArrowUpRight className="h-4 w-4" />
-                        </div>
-                        <p className="text-sm font-semibold text-emerald-900 dark:text-emerald-100">Total Pendapatan</p>
+            {/* Quick Stats - Compacted Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="rounded-xl border bg-card text-card-foreground shadow-sm">
+                    <div className="p-4 flex flex-row items-center justify-between space-y-0 pb-2">
+                        <h3 className="tracking-tight text-xs font-bold uppercase text-muted-foreground">Total Omzet</h3>
+                        <LucideArrowUpRight className="h-4 w-4 text-muted-foreground" />
                     </div>
-                    <p className="text-2xl font-black text-emerald-600 dark:text-emerald-500">Rp {totalSales.toLocaleString('id-ID')}</p>
+                    <div className="p-4 pt-0">
+                        <div className="text-2xl font-bold">
+                            <span className="text-sm font-medium mr-1">Rp</span>
+                            {totalSales.toLocaleString('id-ID')}
+                        </div>
+                        <p className="text-[10px] text-muted-foreground mt-1">Total pendapatan selesai</p>
+                    </div>
                 </div>
-                <div className="bg-white dark:bg-zinc-900 border rounded-2xl p-5 shadow-sm">
-                    <div className="flex items-center gap-3 mb-2">
-                        <div className="h-8 w-8 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600">
-                            <LucideReceipt className="h-4 w-4" />
-                        </div>
-                        <p className="text-sm font-semibold text-zinc-500">Total Transaksi</p>
+                <div className="rounded-xl border bg-card text-card-foreground shadow-sm">
+                    <div className="p-4 flex flex-row items-center justify-between space-y-0 pb-2">
+                        <h3 className="tracking-tight text-xs font-bold uppercase text-muted-foreground">Transaksi</h3>
+                        <LucideReceipt className="h-4 w-4 text-muted-foreground" />
                     </div>
-                    <p className="text-2xl font-black">{totalTransactions}</p>
+                    <div className="p-4 pt-0">
+                        <div className="text-2xl font-bold">{totalTransactions}</div>
+                        <p className="text-[10px] text-muted-foreground mt-1">Jumlah nota berhasil</p>
+                    </div>
                 </div>
-                <div className="bg-white dark:bg-zinc-900 border rounded-2xl p-5 shadow-sm">
-                    <div className="flex items-center gap-3 mb-2">
-                        <div className="h-8 w-8 rounded-full bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center text-orange-600">
-                            <LucideArrowDownRight className="h-4 w-4" />
-                        </div>
-                        <p className="text-sm font-semibold text-zinc-500">Void / Batal</p>
+                <div className="rounded-xl border bg-card text-card-foreground shadow-sm">
+                    <div className="p-4 flex flex-row items-center justify-between space-y-0 pb-2">
+                        <h3 className="tracking-tight text-xs font-bold uppercase text-muted-foreground">Void / Batal</h3>
+                        <LucideArrowDownRight className="h-4 w-4 text-muted-foreground" />
                     </div>
-                    <p className="text-2xl font-black text-orange-500">{filteredTransactions.filter(t => t.status === 'void').length}</p>
+                    <div className="p-4 pt-0">
+                        <div className="text-2xl font-bold">{filteredTransactions.filter(t => t.status === 'void').length}</div>
+                        <p className="text-[10px] text-muted-foreground mt-1">Transaksi dibatalkan</p>
+                    </div>
                 </div>
             </div>
 
             {/* Main Content Area */}
             <div className="bg-white dark:bg-zinc-900 border rounded-2xl shadow-sm flex flex-col flex-1 min-h-0 overflow-hidden">
                 {/* Search & Filter Bar */}
-                <div className="p-4 border-b flex flex-col sm:flex-row gap-3">
+                <div className="p-4 border-b flex flex-row gap-2">
                     <div className="relative flex-1">
-                        <LucideSearch className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
+                        <LucideSearch className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                         <input
                             type="text"
-                            placeholder="Cari no. resi atau nama pelanggan..."
-                            className="w-full bg-zinc-50 dark:bg-zinc-950 border-0 rounded-xl py-2.5 pl-10 pr-4 text-sm focus:ring-2 focus:ring-emerald-500 outline-none transition-all"
+                            placeholder="Cari resi atau nama pelanggan..."
+                            className="flex h-9 w-full rounded-md border border-input bg-background px-9 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring outline-none"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />
                     </div>
-                    <button className="flex items-center justify-center gap-2 px-4 py-2 bg-zinc-50 dark:bg-zinc-950 border rounded-xl text-sm font-medium hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors">
-                        <LucideFilter className="h-4 w-4" />
-                        Filter
+                    <button className="inline-flex h-9 items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium shadow-sm hover:bg-accent hover:text-accent-foreground transition-colors">
+                        <LucideFilter className="h-4 w-4 mr-2" />
+                        <span className="hidden xs:inline">Filter</span>
                     </button>
                 </div>
 
                 {/* Table for Desktop */}
                 <div className="hidden md:block flex-1 overflow-x-auto">
                     <table className="w-full text-sm text-left relative">
-                        <thead className="text-xs text-zinc-500 uppercase bg-zinc-50/50 dark:bg-zinc-900/50 sticky top-0 z-10 border-b">
+                        <thead className="border-b bg-muted/50">
                             <tr>
-                                <th className="px-6 py-4 font-bold whitespace-nowrap">Receipt & Waktu</th>
-                                <th className="px-6 py-4 font-bold whitespace-nowrap">Channel</th>
-                                <th className="px-6 py-4 font-bold whitespace-nowrap">Pembayaran</th>
-                                <th className="px-6 py-4 font-bold text-right whitespace-nowrap">Total</th>
-                                <th className="px-6 py-4 font-bold text-center whitespace-nowrap">Status</th>
+                                <th className="px-6 py-4 text-left align-middle font-bold text-muted-foreground uppercase tracking-widest text-[10px] whitespace-nowrap">Receipt & Waktu</th>
+                                <th className="px-6 py-4 text-left align-middle font-bold text-muted-foreground uppercase tracking-widest text-[10px] whitespace-nowrap">Channel</th>
+                                <th className="px-6 py-4 text-left align-middle font-bold text-muted-foreground uppercase tracking-widest text-[10px] whitespace-nowrap">Pembayaran</th>
+                                <th className="px-6 py-4 text-right align-middle font-bold text-muted-foreground uppercase tracking-widest text-[10px] whitespace-nowrap">Total</th>
+                                <th className="px-6 py-4 text-center align-middle font-bold text-muted-foreground uppercase tracking-widest text-[10px] whitespace-nowrap">Status</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800/50">
                             {loading ? (
-                                <tr>
-                                    <td colSpan={5} className="px-6 py-12 text-center text-zinc-400">
-                                        <div className="animate-spin h-6 w-6 border-2 border-emerald-500 border-t-transparent rounded-full mx-auto mb-3"></div>
-                                        Memuat riwayat transaksi...
-                                    </td>
-                                </tr>
+                                [...Array(5)].map((_, i) => (
+                                    <tr key={i} className="animate-pulse">
+                                        <td className="px-6 py-4">
+                                            <div className="h-4 w-32 bg-zinc-100 dark:bg-zinc-800 rounded mb-2" />
+                                            <div className="h-3 w-20 bg-zinc-100 dark:bg-zinc-800 rounded" />
+                                        </td>
+                                        <td className="px-6 py-4"><div className="h-4 w-16 bg-zinc-100 dark:bg-zinc-800 rounded" /></td>
+                                        <td className="px-6 py-4"><div className="h-4 w-16 bg-zinc-100 dark:bg-zinc-800 rounded" /></td>
+                                        <td className="px-6 py-4"><div className="h-4 w-20 bg-zinc-100 dark:bg-zinc-800 rounded ml-auto" /></td>
+                                        <td className="px-6 py-4"><div className="h-5 w-16 bg-zinc-100 dark:bg-zinc-800 rounded-full mx-auto" /></td>
+                                    </tr>
+                                ))
                             ) : filteredTransactions.length === 0 ? (
                                 <tr>
                                     <td colSpan={5} className="px-6 py-12 text-center">
@@ -293,12 +305,12 @@ export default function SalesHistoryPage({ isDemoMode = false }: SalesHistoryPag
                                         </td>
                                         <td className="px-6 py-4 text-center">
                                             {tx.status === 'completed' ? (
-                                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-emerald-100/50 text-emerald-600 border border-emerald-200">
+                                                <span className="inline-flex items-center rounded-full bg-secondary px-2.5 py-0.5 text-[10px] font-bold border">
                                                     Selesai
                                                 </span>
                                             ) : (
-                                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-red-100/50 text-red-600 border border-red-200">
-                                                    Batal / Void
+                                                <span className="inline-flex items-center rounded-full bg-muted/50 px-2.5 py-0.5 text-[10px] font-bold text-muted-foreground border border-dashed">
+                                                    Void
                                                 </span>
                                             )}
                                         </td>
@@ -312,10 +324,18 @@ export default function SalesHistoryPage({ isDemoMode = false }: SalesHistoryPag
                 {/* Cards for Mobile */}
                 <div className="md:hidden flex-1 overflow-y-auto divide-y divide-zinc-100 dark:divide-zinc-800">
                     {loading ? (
-                        <div className="p-8 text-center text-zinc-400">
-                            <div className="animate-spin h-6 w-6 border-2 border-emerald-500 border-t-transparent rounded-full mx-auto mb-3"></div>
-                            Memuat riwayat transaksi...
-                        </div>
+                        [...Array(5)].map((_, i) => (
+                            <div key={i} className="p-4 space-y-3 animate-pulse">
+                                <div className="flex justify-between">
+                                    <div className="h-4 w-32 bg-zinc-100 dark:bg-zinc-800 rounded" />
+                                    <div className="h-4 w-20 bg-zinc-100 dark:bg-zinc-800 rounded" />
+                                </div>
+                                <div className="flex justify-between">
+                                    <div className="h-3 w-16 bg-zinc-100 dark:bg-zinc-800 rounded" />
+                                    <div className="h-3 w-24 bg-zinc-100 dark:bg-zinc-800 rounded" />
+                                </div>
+                            </div>
+                        ))
                     ) : filteredTransactions.length === 0 ? (
                         <div className="p-8 text-center text-zinc-400">
                             <div className="bg-zinc-50 dark:bg-zinc-900/50 h-16 w-16 rounded-full flex items-center justify-center mx-auto mb-3">
@@ -329,34 +349,36 @@ export default function SalesHistoryPage({ isDemoMode = false }: SalesHistoryPag
                             <div
                                 key={tx.id}
                                 onClick={() => setSelectedTransaction(tx)}
-                                className="p-4 flex flex-col gap-3 active:bg-zinc-50 dark:active:bg-zinc-800/50 transition-colors cursor-pointer"
+                                className="p-3 flex flex-col gap-2 active:bg-zinc-50 dark:active:bg-zinc-800/50 transition-colors cursor-pointer"
                             >
                                 <div className="flex justify-between items-start">
                                     <div>
-                                        <p className="font-bold text-emerald-900 dark:text-emerald-100">{tx.receipt_number}</p>
-                                        <div className="flex items-center text-[11px] text-zinc-500 mt-1">
+                                        <p className="font-bold text-xs text-emerald-900 dark:text-emerald-100">{tx.receipt_number}</p>
+                                        <div className="flex items-center text-[10px] text-zinc-500 mt-0.5">
                                             <span>{new Date(tx.sale_date).toLocaleDateString('id-ID', { month: 'short', day: 'numeric' })}</span>
-                                            <span className="mx-1.5">•</span>
+                                            <span className="mx-1">•</span>
                                             <span>{tx.sale_time.substring(0, 5)}</span>
                                         </div>
                                     </div>
                                     <div className="text-right shrink-0">
-                                        <p className="font-bold tracking-tight text-sm">Rp {tx.total_amount.toLocaleString('id-ID')}</p>
-                                        <p className="text-[10px] font-bold tracking-wider text-zinc-400 uppercase mt-0.5">{tx.payment_method}</p>
+                                        <p className="font-bold tracking-tight text-xs">Rp {tx.total_amount.toLocaleString('id-ID')}</p>
+                                        <div className="flex items-center justify-end gap-1 mt-0.5">
+                                            {tx.status === 'completed' ? (
+                                                <span className="text-[9px] font-black uppercase tracking-tight bg-secondary px-1.5 py-0.5 rounded border">Selesai</span>
+                                            ) : (
+                                                <span className="text-[9px] font-black uppercase tracking-tight text-muted-foreground bg-muted/50 px-1.5 py-0.5 rounded border border-dashed">Batal</span>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
                                 <div className="flex justify-between items-center">
-                                    <div className="flex gap-2">
-                                        <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300">
+                                    <div className="flex items-center gap-1.5">
+                                        <span className="inline-flex items-center px-1.5 py-0.5 rounded-[4px] text-[9px] font-bold uppercase tracking-tight bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700">
                                             {tx.sale_channel}
                                         </span>
-                                        {tx.status === 'completed' ? (
-                                            <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-emerald-100/50 text-emerald-600 border border-emerald-200">SELESAI</span>
-                                        ) : (
-                                            <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-red-100/50 text-red-600 border border-red-200">BATAL</span>
-                                        )}
+                                        <span className="text-[9px] font-bold uppercase text-zinc-400">{tx.payment_method}</span>
                                     </div>
-                                    <span className="text-[11px] font-medium text-zinc-500">
+                                    <span className="text-[10px] font-medium text-zinc-500">
                                         {tx.transaction_items.reduce((s: number, i: any) => s + i.quantity, 0)} items
                                     </span>
                                 </div>

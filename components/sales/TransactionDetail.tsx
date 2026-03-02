@@ -73,8 +73,8 @@ export default function TransactionDetail({ transaction, onClose, onStatusUpdate
                 {/* Header */}
                 <div className="flex items-center justify-between p-6 border-b">
                     <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
-                            <LucideReceipt className="h-5 w-5 text-emerald-600" />
+                        <div className="h-10 w-10 rounded-full bg-secondary flex items-center justify-center">
+                            <LucideReceipt className="h-5 w-5 text-foreground" />
                         </div>
                         <div>
                             <h3 className="font-bold text-lg">Detail Transaksi</h3>
@@ -83,7 +83,7 @@ export default function TransactionDetail({ transaction, onClose, onStatusUpdate
                     </div>
                     <div className="flex items-center gap-4">
                         {isVoided && (
-                            <span className="px-3 py-1 rounded-full bg-red-100 text-red-600 font-bold text-xs uppercase tracking-wider">
+                            <span className="px-3 py-1 rounded-full bg-muted/50 text-muted-foreground font-bold text-xs uppercase tracking-wider border border-dashed">
                                 VOID
                             </span>
                         )}
@@ -158,20 +158,20 @@ export default function TransactionDetail({ transaction, onClose, onStatusUpdate
                     </div>
 
                     {/* Summary */}
-                    <div className="bg-zinc-50 dark:bg-zinc-900/50 p-4 rounded-xl space-y-3">
+                    <div className="bg-secondary/50 p-4 rounded-xl space-y-3">
                         <div className="flex justify-between text-sm">
-                            <span className="text-zinc-500">Total HPP (Modal)</span>
-                            <span className="font-medium">Rp {transaction.total_hpp.toLocaleString('id-ID')}</span>
+                            <span className="text-muted-foreground italic">Total Modal (HPP)</span>
+                            <span className="font-semibold">Rp {transaction.total_hpp.toLocaleString('id-ID')}</span>
                         </div>
-                        <div className="flex justify-between text-sm">
-                            <span className="text-zinc-500">Estimasi Gross Profit</span>
-                            <span className="font-medium text-emerald-600">
+                        <div className="flex justify-between text-sm border-b border-dashed pb-2">
+                            <span className="text-muted-foreground">Gross Profit</span>
+                            <span className="font-bold underline">
                                 Rp {(transaction.total_amount - transaction.total_hpp).toLocaleString('id-ID')}
                             </span>
                         </div>
-                        <div className="pt-3 border-t flex justify-between">
+                        <div className="pt-2 flex justify-between items-center">
                             <span className="font-bold text-lg">Total Pembayaran</span>
-                            <span className="font-black text-lg text-emerald-600">
+                            <span className="text-2xl font-black">
                                 Rp {transaction.total_amount.toLocaleString('id-ID')}
                             </span>
                         </div>
@@ -187,9 +187,9 @@ export default function TransactionDetail({ transaction, onClose, onStatusUpdate
                         </div>
                         <button
                             onClick={handleVoid}
-                            className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-zinc-900 border border-red-200 dark:border-red-900/50 text-red-600 font-bold rounded-lg hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors"
+                            className="inline-flex h-9 items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium text-red-500 shadow-sm hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors"
                         >
-                            <LucideUndo2 className="h-4 w-4" />
+                            <LucideUndo2 className="h-4 w-4 mr-2" />
                             Void Transaksi
                         </button>
                     </div>

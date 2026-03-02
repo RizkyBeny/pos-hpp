@@ -9,7 +9,9 @@ import InventoryPage from "@/components/inventory/InventoryPage";
 import POSPage from "@/components/pos/POSPage";
 import SalesHistoryPage from "@/components/sales/SalesHistoryPage";
 import RevenueChart from "@/components/dashboard/RevenueChart";
+import TopProducts from "@/components/dashboard/TopProducts";
 import { useDemoRecipes } from "@/lib/store/useDemoRecipes";
+import { motion, AnimatePresence } from "framer-motion";
 import {
     LucidePlus,
     LucideChefHat,
@@ -292,66 +294,80 @@ export default function Home() {
     return (
         <div className="flex min-h-screen bg-background font-sans antialiased text-foreground">
             {/* Mobile Sidebar Overlay */}
-            {mobileMenuOpen && (
-                <div className="fixed inset-0 z-50 lg:hidden">
-                    <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setMobileMenuOpen(false)} />
-                    <aside className="absolute left-0 top-0 h-full w-72 bg-white dark:bg-zinc-950 border-r shadow-xl flex flex-col animate-in slide-in-from-left duration-200">
-                        <div className="flex h-14 items-center justify-between border-b px-6">
-                            <div className="flex items-center gap-2 font-semibold">
-                                <LucideChefHat className="h-6 w-6" />
-                                <span>HargaKu</span>
-                            </div>
-                            <button onClick={() => setMobileMenuOpen(false)} className="h-8 w-8 flex items-center justify-center rounded-md hover:bg-muted">
-                                <LucideX className="h-4 w-4" />
-                            </button>
-                        </div>
-                        <div className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
-                            <p className="px-3 mb-2 text-[10px] font-medium uppercase tracking-wider text-muted-foreground">General</p>
-                            <button onClick={() => switchTab('dashboard')} className={`flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-colors ${activeTab === 'dashboard' ? 'bg-zinc-100 text-zinc-900 dark:bg-zinc-800 dark:text-zinc-50 shadow-sm' : 'text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-zinc-900'}`}>
-                                <LucideLayoutDashboard className="h-4 w-4" /> Dashboard
-                            </button>
-                            <button onClick={() => switchTab('pos')} className={`flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-colors ${activeTab === 'pos' ? 'bg-zinc-100 text-zinc-900 dark:bg-zinc-800 dark:text-zinc-50 shadow-sm' : 'text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-zinc-900'}`}>
-                                <LucideShoppingBag className="h-4 w-4" /> Kasir (POS)
-                            </button>
-                            <button onClick={() => switchTab('inventory')} className={`flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-colors ${activeTab === 'inventory' ? 'bg-zinc-100 text-zinc-900 dark:bg-zinc-800 dark:text-zinc-50 shadow-sm' : 'text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-zinc-900'}`}>
-                                <LucidePackage className="h-4 w-4" /> Inventaris
-                            </button>
-                            <button onClick={() => switchTab('recipes')} className={`flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-colors ${activeTab === 'recipes' ? 'bg-zinc-100 text-zinc-900 dark:bg-zinc-800 dark:text-zinc-50 shadow-sm' : 'text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-zinc-900'}`}>
-                                <LucidePlus className="h-4 w-4" /> Kalkulasi Baru
-                            </button>
-                            <button onClick={() => switchTab('recipe-list')} className={`flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-colors ${activeTab === 'recipe-list' || activeTab === 'recipe-detail' ? 'bg-zinc-100 text-zinc-900 dark:bg-zinc-800 dark:text-zinc-50 shadow-sm' : 'text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-zinc-900'}`}>
-                                <LucideBookOpen className="h-4 w-4" /> Katalog Resep
-                            </button>
-                            <button onClick={() => switchTab('sales')} className={`flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-colors ${activeTab === 'sales' ? 'bg-zinc-100 text-zinc-900 dark:bg-zinc-800 dark:text-zinc-50 shadow-sm' : 'text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-zinc-900'}`}>
-                                <LucideHistory className="h-4 w-4" /> Riwayat Sales
-                            </button>
-                            <p className="px-3 mb-2 mt-6 text-[10px] font-medium uppercase tracking-wider text-muted-foreground">System</p>
-                            <button className="flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-zinc-900 transition-colors">
-                                <LucideSettings className="h-4 w-4" /> Settings
-                            </button>
-                        </div>
-                        <div className="p-4 border-t">
-                            <div className="flex flex-col gap-2">
-                                <div className="flex items-center gap-3 p-2 rounded-md">
-                                    <div className="h-8 w-8 rounded-full bg-zinc-200 dark:bg-zinc-700 flex items-center justify-center text-zinc-500">
-                                        <LucideUser className="h-5 w-5" />
-                                    </div>
-                                    <div className="flex flex-col min-w-0">
-                                        <span className="text-xs font-medium truncate leading-none">Admin Demo</span>
-                                        <span className="text-[10px] text-zinc-400 truncate mt-1">demo@hargaku.com</span>
-                                    </div>
+            <AnimatePresence>
+                {mobileMenuOpen && (
+                    <div className="fixed inset-0 z-50 lg:hidden">
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+                            onClick={() => setMobileMenuOpen(false)}
+                        />
+                        <motion.aside
+                            initial={{ x: "-100%" }}
+                            animate={{ x: 0 }}
+                            exit={{ x: "-100%" }}
+                            transition={{ type: "spring", damping: 25, stiffness: 200 }}
+                            className="absolute left-0 top-0 h-full w-72 bg-white dark:bg-zinc-950 border-r shadow-xl flex flex-col"
+                        >
+                            <div className="flex h-14 items-center justify-between border-b px-6">
+                                <div className="flex items-center gap-2 font-semibold">
+                                    <LucideChefHat className="h-6 w-6" />
+                                    <span>HargaKu</span>
                                 </div>
-                                <button
-                                    onClick={handleLogout}
-                                    className="flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors"
-                                >
-                                    <LucideLogOut className="h-4 w-4" /> Keluar
+                                <button onClick={() => setMobileMenuOpen(false)} className="h-8 w-8 flex items-center justify-center rounded-md hover:bg-muted">
+                                    <LucideX className="h-4 w-4" />
                                 </button>
                             </div>
-                        </div>
-                    </aside>
-                </div>
-            )}
+                            <div className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
+                                <p className="px-3 mb-2 text-[10px] font-medium uppercase tracking-wider text-muted-foreground">General</p>
+                                <button onClick={() => switchTab('dashboard')} className={`flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors ${activeTab === 'dashboard' ? 'bg-secondary text-secondary-foreground shadow-sm' : 'text-muted-foreground hover:bg-secondary/50 hover:text-foreground'}`}>
+                                    <LucideLayoutDashboard className="h-4 w-4" /> Dashboard
+                                </button>
+                                <button onClick={() => switchTab('pos')} className={`flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors ${activeTab === 'pos' ? 'bg-secondary text-secondary-foreground shadow-sm' : 'text-muted-foreground hover:bg-secondary/50 hover:text-foreground'}`}>
+                                    <LucideShoppingBag className="h-4 w-4" /> Kasir (POS)
+                                </button>
+                                <button onClick={() => switchTab('inventory')} className={`flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors ${activeTab === 'inventory' ? 'bg-secondary text-secondary-foreground shadow-sm' : 'text-muted-foreground hover:bg-secondary/50 hover:text-foreground'}`}>
+                                    <LucidePackage className="h-4 w-4" /> Inventaris
+                                </button>
+                                <button onClick={() => switchTab('recipes')} className={`flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors ${activeTab === 'recipes' ? 'bg-secondary text-secondary-foreground shadow-sm' : 'text-muted-foreground hover:bg-secondary/50 hover:text-foreground'}`}>
+                                    <LucidePlus className="h-4 w-4" /> Kalkulasi Baru
+                                </button>
+                                <button onClick={() => switchTab('recipe-list')} className={`flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors ${activeTab === 'recipe-list' || activeTab === 'recipe-detail' ? 'bg-secondary text-secondary-foreground shadow-sm' : 'text-muted-foreground hover:bg-secondary/50 hover:text-foreground'}`}>
+                                    <LucideBookOpen className="h-4 w-4" /> Katalog Resep
+                                </button>
+                                <button onClick={() => switchTab('sales')} className={`flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors ${activeTab === 'sales' ? 'bg-secondary text-secondary-foreground shadow-sm' : 'text-muted-foreground hover:bg-secondary/50 hover:text-foreground'}`}>
+                                    <LucideHistory className="h-4 w-4" /> Riwayat Sales
+                                </button>
+                                <p className="px-3 mb-2 mt-6 text-[10px] font-medium uppercase tracking-wider text-muted-foreground">System</p>
+                                <button className="flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-zinc-900 transition-colors">
+                                    <LucideSettings className="h-4 w-4" /> Settings
+                                </button>
+                            </div>
+                            <div className="p-4 border-t">
+                                <div className="flex flex-col gap-2">
+                                    <div className="flex items-center gap-3 p-2 rounded-md">
+                                        <div className="h-8 w-8 rounded-full bg-zinc-200 dark:bg-zinc-700 flex items-center justify-center text-zinc-500">
+                                            <LucideUser className="h-5 w-5" />
+                                        </div>
+                                        <div className="flex flex-col min-w-0">
+                                            <span className="text-xs font-medium truncate leading-none">Admin Demo</span>
+                                            <span className="text-[10px] text-zinc-400 truncate mt-1">demo@hargaku.com</span>
+                                        </div>
+                                    </div>
+                                    <button
+                                        onClick={handleLogout}
+                                        className="flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors"
+                                    >
+                                        <LucideLogOut className="h-4 w-4" /> Keluar
+                                    </button>
+                                </div>
+                            </div>
+                        </motion.aside>
+                    </div>
+                )}
+            </AnimatePresence>
 
             {/* Desktop Sidebar */}
             <aside className="fixed left-0 top-0 hidden h-screen w-64 border-r bg-muted/40 lg:flex flex-col z-40">
@@ -366,47 +382,46 @@ export default function Home() {
                     <p className="px-3 mb-2 text-[10px] font-medium uppercase tracking-wider text-muted-foreground">General</p>
                     <button
                         onClick={() => setActiveTab('dashboard')}
-                        className={`flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors ${activeTab === 'dashboard' ? 'bg-zinc-100 text-zinc-900 dark:bg-zinc-800 dark:text-zinc-50 shadow-sm' : 'text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-zinc-900'}`}
+                        className={`flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors ${activeTab === 'dashboard' ? 'bg-secondary text-secondary-foreground shadow-sm' : 'text-muted-foreground hover:bg-secondary/50 hover:text-foreground'}`}
                     >
                         <LucideLayoutDashboard className="h-4 w-4" />
                         Dashboard
                     </button>
                     <button
                         onClick={() => setActiveTab('pos')}
-                        className={`flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors ${activeTab === 'pos' ? 'bg-zinc-100 text-zinc-900 dark:bg-zinc-800 dark:text-zinc-50 shadow-sm' : 'text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-zinc-900'}`}
+                        className={`flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors ${activeTab === 'pos' ? 'bg-secondary text-secondary-foreground shadow-sm' : 'text-muted-foreground hover:bg-secondary/50 hover:text-foreground'}`}
                     >
                         <LucideShoppingBag className="h-4 w-4" />
                         Kasir (POS)
                     </button>
                     <button
                         onClick={() => setActiveTab('inventory')}
-                        className={`flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors ${activeTab === 'inventory' ? 'bg-zinc-100 text-zinc-900 dark:bg-zinc-800 dark:text-zinc-50 shadow-sm' : 'text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-zinc-900'}`}
+                        className={`flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors ${activeTab === 'inventory' ? 'bg-secondary text-secondary-foreground shadow-sm' : 'text-muted-foreground hover:bg-secondary/50 hover:text-foreground'}`}
                     >
                         <LucidePackage className="h-4 w-4" />
                         Inventaris
                     </button>
                     <button
                         onClick={() => setActiveTab('recipes')}
-                        className={`flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors ${activeTab === 'recipes' ? 'bg-zinc-100 text-zinc-900 dark:bg-zinc-800 dark:text-zinc-50 shadow-sm' : 'text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-zinc-900'}`}
+                        className={`flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors ${activeTab === 'recipes' ? 'bg-secondary text-secondary-foreground shadow-sm' : 'text-muted-foreground hover:bg-secondary/50 hover:text-foreground'}`}
                     >
                         <LucidePlus className="h-4 w-4" />
                         Kalkulasi Baru
                     </button>
                     <button
                         onClick={() => setActiveTab('recipe-list')}
-                        className={`flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors ${activeTab === 'recipe-list' || activeTab === 'recipe-detail' ? 'bg-zinc-100 text-zinc-900 dark:bg-zinc-800 dark:text-zinc-50 shadow-sm' : 'text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-zinc-900'}`}
+                        className={`flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors ${activeTab === 'recipe-list' || activeTab === 'recipe-detail' ? 'bg-secondary text-secondary-foreground shadow-sm' : 'text-muted-foreground hover:bg-secondary/50 hover:text-foreground'}`}
                     >
                         <LucideBookOpen className="h-4 w-4" />
                         Katalog Resep
                     </button>
                     <button
                         onClick={() => setActiveTab('sales')}
-                        className={`flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors ${activeTab === 'sales' ? 'bg-zinc-100 text-zinc-900 dark:bg-zinc-800 dark:text-zinc-50 shadow-sm' : 'text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-zinc-900'}`}
+                        className={`flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors ${activeTab === 'sales' ? 'bg-secondary text-secondary-foreground shadow-sm' : 'text-muted-foreground hover:bg-secondary/50 hover:text-foreground'}`}
                     >
                         <LucideHistory className="h-4 w-4" />
                         Riwayat Sales
                     </button>
-
                     <p className="px-3 mb-2 mt-6 text-[10px] font-medium uppercase tracking-wider text-muted-foreground">System</p>
                     <button className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-zinc-900 transition-colors">
                         <LucideSettings className="h-4 w-4" />
@@ -462,194 +477,197 @@ export default function Home() {
                     </div>
                 </header>
 
-                <div className="p-4 md:p-8 pt-6 pb-20 lg:pb-8 space-y-6 w-full">
-                    {activeTab === 'dashboard' && (
-                        <div className="space-y-6 animate-in fade-in duration-500">
-                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                                <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">Dashboard</h2>
-                                <div className="flex items-center space-x-2">
-                                    <button className="inline-flex items-center justify-center rounded-md bg-zinc-900 px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-white shadow hover:bg-zinc-800 transition-colors dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-200">
-                                        <LucideCalendar className="mr-2 h-4 w-4" />
-                                        <span className="hidden sm:inline">Jan 20, 2026 - Feb 28, 2026</span>
-                                        <span className="sm:hidden">Jan - Feb 2026</span>
-                                    </button>
-                                </div>
-                            </div>
-
-                            {/* Dashboard Metrics */}
-                            <div className="grid gap-3 grid-cols-2 lg:grid-cols-4">
-                                <div className="rounded-xl border bg-card text-card-foreground shadow-sm">
-                                    <div className="p-4 md:p-6 flex flex-row items-center justify-between space-y-0 pb-2">
-                                        <h3 className="tracking-tight text-sm md:text-sm font-medium">Bahan Baku</h3>
-                                        <LucidePackage className="h-4 w-4 text-muted-foreground" />
-                                    </div>
-                                    <div className="px-4 pb-4 md:p-6 pt-0">
-                                        <div className="text-xl md:text-2xl font-bold">{ingredients.length}</div>
-                                        <p className="text-xs md:text-xs text-muted-foreground mt-0.5">Tersimpan di gudang</p>
-                                    </div>
-                                </div>
-                                <div className="rounded-xl border bg-card text-card-foreground shadow-sm">
-                                    <div className="p-4 md:p-6 flex flex-row items-center justify-between space-y-0 pb-2">
-                                        <h3 className="tracking-tight text-sm md:text-sm font-medium">Total Resep</h3>
-                                        <LucideChefHat className="h-4 w-4 text-muted-foreground" />
-                                    </div>
-                                    <div className="px-4 pb-4 md:p-6 pt-0">
-                                        <div className="text-xl md:text-2xl font-bold">{recipeCount}</div>
-                                        <p className="text-xs md:text-xs text-muted-foreground mt-0.5">Telah dikalkulasi</p>
-                                    </div>
-                                </div>
-                                <div className="rounded-xl border bg-card text-card-foreground shadow-sm">
-                                    <div className="p-4 md:p-6 flex flex-row items-center justify-between space-y-0 pb-2">
-                                        <h3 className="tracking-tight text-sm md:text-sm font-medium">Stok Menipis</h3>
-                                        <LucideAlertTriangle className="h-4 w-4 text-amber-500" />
-                                    </div>
-                                    <div className="px-4 pb-4 md:p-6 pt-0">
-                                        <div className="text-xl md:text-2xl font-bold">{lowStockIngredients.length}</div>
-                                        <p className="text-xs md:text-xs text-muted-foreground mt-0.5">Bahan butuh restock</p>
-                                    </div>
-                                </div>
-                                <div className="rounded-xl border bg-card text-card-foreground shadow-sm">
-                                    <div className="p-4 md:p-6 flex flex-row items-center justify-between space-y-0 pb-2">
-                                        <h3 className="tracking-tight text-sm md:text-sm font-medium">Saldo Kas</h3>
-                                        <div className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-1 rounded">POS</div>
-                                    </div>
-                                    <div className="px-4 pb-4 md:p-6 pt-0">
-                                        <div className="text-xl md:text-2xl font-bold">Rp {todaySales.toLocaleString('id-ID')}</div>
-                                        <p className="text-xs md:text-xs text-muted-foreground mt-0.5">Pendapatan hari ini</p>
-                                    </div>
-                                </div>
-
-                                <div className="col-span-2 lg:col-span-4 rounded-xl border bg-card text-card-foreground shadow-sm overflow-hidden relative group">
-                                    <div className="flex flex-row h-full">
-                                        <div className="hidden sm:flex w-1/4 bg-emerald-50 dark:bg-emerald-950/20 items-center justify-center border-r relative overflow-hidden">
-                                            <div className="absolute inset-0 opacity-20 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-emerald-400 via-transparent to-transparent"></div>
-                                            <LucidePackage className="h-16 w-16 text-emerald-300 dark:text-emerald-700 transition-transform duration-500 group-hover:scale-110" strokeWidth={1.5} />
-                                        </div>
-                                        <div className="flex flex-col justify-center p-6 gap-6 flex-1">
-                                            <div className="space-y-2">
-                                                <h3 className="text-base font-bold leading-none tracking-tight">Manajemen Stok</h3>
-                                                <p className="text-sm text-muted-foreground w-full text-balance text-wrap">Monitor stok live secara otomatis. Atur alarm stok menipis dan catat riwayat pembelian bahan baku.</p>
-                                            </div>
-                                            <button
-                                                onClick={() => setActiveTab('ingredients')}
-                                                className="w-fit h-9 rounded-md bg-emerald-600 dark:bg-emerald-50 text-white dark:text-zinc-900 text-xs font-semibold px-5 shadow transition-opacity hover:opacity-90 flex items-center justify-center gap-2"
-                                            >
-                                                Buka Inventaris <LucideArrowRight className="h-3.5 w-3.5" />
+                <div className="p-3 md:p-8 pt-3 pb-20 lg:pb-8 w-full">
+                    <AnimatePresence mode="wait">
+                        <motion.div
+                            key={activeTab === 'recipe-detail' ? `detail-${selectedRecipeId}` : activeTab}
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -10 }}
+                            transition={{ duration: 0.2 }}
+                            className="w-full"
+                        >
+                            {activeTab === 'dashboard' && (
+                                <div className="space-y-6">
+                                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                                        <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">Dashboard</h2>
+                                        <div className="flex items-center space-x-2">
+                                            <button className="inline-flex items-center justify-center rounded-md bg-zinc-900 px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-white shadow hover:bg-zinc-800 transition-colors dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-200">
+                                                <LucideCalendar className="mr-2 h-4 w-4" />
+                                                <span className="hidden sm:inline">Jan 20, 2026 - Feb 28, 2026</span>
+                                                <span className="sm:hidden">Jan - Feb 2026</span>
                                             </button>
                                         </div>
                                     </div>
-                                </div>
-                            </div>
 
-                            {lowStockIngredients.length > 0 && (
-                                <div className="rounded-xl border border-amber-200 bg-amber-50/50 dark:bg-amber-950/10 dark:border-amber-900/50 p-6 space-y-4">
-                                    <div className="flex items-center justify-between">
-                                        <div className="flex items-center gap-2">
-                                            <LucideAlertTriangle className="h-5 w-5 text-amber-600" />
-                                            <h3 className="font-bold text-amber-900 dark:text-amber-100">Bahan Hampir Habis</h3>
+                                    {/* Dashboard Metrics */}
+                                    <div className="grid gap-3 grid-cols-2 lg:grid-cols-4">
+                                        <div className="rounded-xl border bg-card text-card-foreground shadow-sm">
+                                            <div className="p-6 flex flex-row items-center justify-between space-y-0 pb-2">
+                                                <h3 className="tracking-tight text-sm font-medium">Bahan Baku</h3>
+                                                <LucidePackage className="h-4 w-4 text-muted-foreground" />
+                                            </div>
+                                            <div className="p-6 pt-0">
+                                                <div className="text-2xl font-bold">{ingredients.length}</div>
+                                                <p className="text-xs text-muted-foreground mt-1">Tersimpan di gudang</p>
+                                            </div>
                                         </div>
-                                        <button onClick={() => setActiveTab('ingredients')} className="text-xs font-semibold text-amber-700 hover:underline">Lihat Semua</button>
-                                    </div>
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                                        {lowStockIngredients.slice(0, 6).map(ing => (
-                                            <div key={ing.id} className="flex items-center justify-between p-3 rounded-lg bg-white dark:bg-zinc-900 border border-amber-100 dark:border-amber-900/30 shadow-sm">
-                                                <span className="text-sm font-medium">{ing.name}</span>
-                                                <div className="text-right">
-                                                    <div className="text-xs font-bold text-red-600">{ing.stock_quantity} {ing.stock_unit}</div>
-                                                    <div className="text-[10px] text-muted-foreground">Min: {ing.min_stock_alert}</div>
+                                        <div className="rounded-xl border bg-card text-card-foreground shadow-sm">
+                                            <div className="p-6 flex flex-row items-center justify-between space-y-0 pb-2">
+                                                <h3 className="tracking-tight text-sm font-medium">Total Resep</h3>
+                                                <LucideChefHat className="h-4 w-4 text-muted-foreground" />
+                                            </div>
+                                            <div className="p-6 pt-0">
+                                                <div className="text-2xl font-bold">{recipeCount}</div>
+                                                <p className="text-xs text-muted-foreground mt-1">Telah dikalkulasi</p>
+                                            </div>
+                                        </div>
+                                        <div className="rounded-xl border bg-card text-card-foreground shadow-sm">
+                                            <div className="p-6 flex flex-row items-center justify-between space-y-0 pb-2">
+                                                <h3 className="tracking-tight text-sm font-medium">Stok Menipis</h3>
+                                                <LucideAlertTriangle className="h-4 w-4 text-amber-500" />
+                                            </div>
+                                            <div className="p-6 pt-0">
+                                                <div className="text-2xl font-bold">{lowStockIngredients.length}</div>
+                                                <p className="text-xs text-muted-foreground mt-1">Bahan butuh restock</p>
+                                            </div>
+                                        </div>
+                                        <div className="rounded-xl border bg-card text-card-foreground shadow-sm">
+                                            <div className="p-6 flex flex-row items-center justify-between space-y-0 pb-2">
+                                                <h3 className="tracking-tight text-sm font-medium">Saldo Kas</h3>
+                                                <div className="text-[10px] font-bold text-muted-foreground/50 border px-1 rounded">POS</div>
+                                            </div>
+                                            <div className="p-6 pt-0">
+                                                <div className="text-2xl font-bold">Rp {todaySales.toLocaleString('id-ID')}</div>
+                                                <p className="text-xs text-muted-foreground mt-1">Pendapatan hari ini</p>
+                                            </div>
+                                        </div>
+
+                                        <div className="col-span-2 lg:col-span-4 rounded-xl border bg-card text-card-foreground shadow-sm overflow-hidden relative group">
+                                            <div className="flex flex-row h-full">
+                                                <div className="hidden sm:flex w-1/4 bg-muted items-center justify-center border-r relative overflow-hidden">
+                                                    <LucidePackage className="h-12 w-12 text-muted-foreground/30 transition-transform duration-500 group-hover:scale-110" strokeWidth={1.5} />
+                                                </div>
+                                                <div className="flex flex-col justify-center p-6 gap-6 flex-1">
+                                                    <div className="space-y-2">
+                                                        <h3 className="text-base font-bold leading-none tracking-tight">Manajemen Stok</h3>
+                                                        <p className="text-sm text-muted-foreground w-full text-balance text-wrap">Monitor stok live secara otomatis. Atur alarm stok menipis dan catat riwayat pembelian bahan baku.</p>
+                                                    </div>
+                                                    <button
+                                                        onClick={() => setActiveTab('ingredients')}
+                                                        className="w-fit h-9 rounded-md bg-foreground text-background text-xs font-semibold px-5 shadow transition-opacity hover:opacity-90 flex items-center justify-center gap-2"
+                                                    >
+                                                        Buka Inventaris <LucideArrowRight className="h-3.5 w-3.5" />
+                                                    </button>
                                                 </div>
                                             </div>
-                                        ))}
+                                        </div>
+                                    </div>
+
+                                    {lowStockIngredients.length > 0 && (
+                                        <div className="rounded-xl border border-amber-200 bg-amber-50/50 dark:bg-amber-950/10 dark:border-amber-900/50 p-6 space-y-4">
+                                            <div className="flex items-center justify-between">
+                                                <div className="flex items-center gap-2">
+                                                    <LucideAlertTriangle className="h-5 w-5 text-amber-600" />
+                                                    <h3 className="font-bold text-amber-900 dark:text-amber-100">Bahan Hampir Habis</h3>
+                                                </div>
+                                                <button onClick={() => setActiveTab('ingredients')} className="text-xs font-semibold text-amber-700 hover:underline">Lihat Semua</button>
+                                            </div>
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                                                {lowStockIngredients.slice(0, 6).map(ing => (
+                                                    <div key={ing.id} className="flex items-center justify-between p-3 rounded-lg bg-white dark:bg-zinc-900 border border-amber-100 dark:border-amber-900/30 shadow-sm">
+                                                        <span className="text-sm font-medium">{ing.name}</span>
+                                                        <div className="text-right">
+                                                            <div className="text-xs font-bold text-red-600">{ing.stock_quantity} {ing.stock_unit}</div>
+                                                            <div className="text-[10px] text-muted-foreground">Min: {ing.min_stock_alert}</div>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Revenue & Top Products */}
+                                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                                        <div className="lg:col-span-2">
+                                            <RevenueChart isDemoMode={isDemoMode} />
+                                        </div>
+                                        <TopProducts isDemoMode={isDemoMode} />
+                                    </div>
+
+                                    <div className="rounded-xl border bg-card text-card-foreground shadow-sm overflow-hidden text-wrap">
+                                        <div className="flex flex-col space-y-1.5 p-5 md:p-6 pb-2 md:pb-4">
+                                            <h3 className="text-base font-semibold leading-none tracking-tight">Katalog HPP Produk</h3>
+                                            <p className="text-sm text-muted-foreground">Daftar resep yang telah dikalkulasi. Klik untuk melihat detail.</p>
+                                        </div>
+                                        <div className="overflow-x-auto">
+                                            <RecipeList
+                                                onViewRecipe={handleViewRecipe}
+                                                isDemoMode={isDemoMode}
+                                                availableIngredients={ingredients}
+                                            />
+                                        </div>
                                     </div>
                                 </div>
                             )}
 
-                            {/* Revenue Chart */}
-                            <RevenueChart isDemoMode={isDemoMode} />
+                            {activeTab === 'pos' && (
+                                <POSPage isDemoMode={isDemoMode} />
+                            )}
 
-                            <div className="rounded-xl border bg-card text-card-foreground shadow-sm overflow-hidden text-wrap">
-                                <div className="flex flex-col space-y-1.5 p-5 md:p-6 pb-2 md:pb-4">
-                                    <h3 className="text-base font-semibold leading-none tracking-tight">Katalog HPP Produk</h3>
-                                    <p className="text-sm text-muted-foreground">Daftar resep yang telah dikalkulasi. Klik untuk melihat detail.</p>
+                            {activeTab === 'inventory' && (
+                                <InventoryPage
+                                    ingredients={ingredients}
+                                    onIngredientsChange={handleIngredientsChange}
+                                    isDemoMode={isDemoMode}
+                                />
+                            )}
+
+                            {activeTab === 'ingredients' && (
+                                <IngredientManager
+                                    onIngredientsChange={handleIngredientsChange}
+                                    initialIngredients={ingredients}
+                                    isDemoMode={isDemoMode}
+                                />
+                            )}
+
+                            {activeTab === 'recipes' && (
+                                <RecipeForm
+                                    availableIngredients={ingredients}
+                                    isDemoMode={isDemoMode}
+                                />
+                            )}
+
+                            {activeTab === 'recipe-list' && (
+                                <div className="rounded-xl border bg-card text-card-foreground shadow-sm overflow-hidden">
+                                    <div className="flex flex-col space-y-1.5 p-5 md:p-6 pb-2 md:pb-4">
+                                        <h2 className="text-2xl font-bold tracking-tight">Katalog Resep</h2>
+                                        <p className="text-sm text-muted-foreground">Daftar semua resep yang telah dikalkulasi. Klik untuk melihat detail.</p>
+                                    </div>
+                                    <div className="overflow-x-auto">
+                                        <RecipeList
+                                            onViewRecipe={handleViewRecipe}
+                                            isDemoMode={isDemoMode}
+                                            availableIngredients={ingredients}
+                                        />
+                                    </div>
                                 </div>
-                                <div className="overflow-x-auto">
-                                    <RecipeList
-                                        onViewRecipe={handleViewRecipe}
-                                        isDemoMode={isDemoMode}
-                                        availableIngredients={ingredients}
-                                    />
-                                </div>
-                            </div>
-                        </div>
-                    )}
+                            )}
 
-                    {activeTab === 'pos' && (
-                        <div className="animate-in fade-in duration-500">
-                            <POSPage isDemoMode={isDemoMode} />
-                        </div>
-                    )}
+                            {activeTab === 'recipe-detail' && selectedRecipeId && (
+                                <RecipeDetail
+                                    recipeId={selectedRecipeId}
+                                    onBack={handleBackFromDetail}
+                                    availableIngredients={ingredients}
+                                    isDemoMode={isDemoMode}
+                                />
+                            )}
 
-                    {activeTab === 'inventory' && (
-                        <div className="animate-in fade-in duration-500">
-                            <InventoryPage
-                                ingredients={ingredients}
-                                onIngredientsChange={handleIngredientsChange}
-                                isDemoMode={isDemoMode}
-                            />
-                        </div>
-                    )}
-
-                    {activeTab === 'ingredients' && (
-                        <div className="animate-in fade-in duration-500">
-                            <IngredientManager
-                                onIngredientsChange={handleIngredientsChange}
-                                initialIngredients={ingredients}
-                                isDemoMode={isDemoMode}
-                            />
-                        </div>
-                    )}
-
-                    {activeTab === 'recipes' && (
-                        <div className="animate-in fade-in duration-500">
-                            <RecipeForm
-                                availableIngredients={ingredients}
-                                isDemoMode={isDemoMode}
-                            />
-                        </div>
-                    )}
-
-                    {activeTab === 'recipe-list' && (
-                        <div className="animate-in fade-in duration-500">
-                            <div className="rounded-xl border bg-card text-card-foreground shadow-sm overflow-hidden">
-                                <div className="flex flex-col space-y-1.5 p-5 md:p-6 pb-2 md:pb-4">
-                                    <h2 className="text-2xl font-bold tracking-tight">Katalog Resep</h2>
-                                    <p className="text-sm text-muted-foreground">Daftar semua resep yang telah dikalkulasi. Klik untuk melihat detail.</p>
-                                </div>
-                                <div className="overflow-x-auto">
-                                    <RecipeList
-                                        onViewRecipe={handleViewRecipe}
-                                        isDemoMode={isDemoMode}
-                                        availableIngredients={ingredients}
-                                    />
-                                </div>
-                            </div>
-                        </div>
-                    )}
-
-                    {activeTab === 'recipe-detail' && selectedRecipeId && (
-                        <RecipeDetail
-                            recipeId={selectedRecipeId}
-                            onBack={handleBackFromDetail}
-                            availableIngredients={ingredients}
-                            isDemoMode={isDemoMode}
-                        />
-                    )}
-
-                    {activeTab === 'sales' && (
-                        <div className="animate-in fade-in duration-500">
-                            <SalesHistoryPage isDemoMode={isDemoMode} />
-                        </div>
-                    )}
+                            {activeTab === 'sales' && (
+                                <SalesHistoryPage isDemoMode={isDemoMode} />
+                            )}
+                        </motion.div>
+                    </AnimatePresence>
                 </div>
 
                 {/* Mobile Bottom Navigation */}
@@ -689,18 +707,11 @@ export default function Home() {
                         <LucideHistory className="h-5 w-5" />
                         <span className="text-[10px] font-medium">Riwayat</span>
                     </button>
-                    <button
-                        onClick={() => setActiveTab('dashboard')}
-                        className={`flex flex-col items-center justify-center gap-1 flex-1 h-full transition-colors text-zinc-400 hidden sm:flex`}
-                    >
-                        <LucideSettings className="h-5 w-5" />
-                        <span className="text-[10px] font-medium">Settings</span>
-                    </button>
                 </nav>
             </main>
 
             {/* Spacer for mobile bottom nav */}
-            < div className="h-16 lg:hidden" />
-        </div >
+            <div className="h-16 lg:hidden" />
+        </div>
     );
 }

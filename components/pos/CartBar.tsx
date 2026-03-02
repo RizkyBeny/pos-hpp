@@ -39,11 +39,11 @@ export default function CartBar({ isDemoMode = false, onCheckout }: CartBarProps
         <>
             <div className={cn(
                 "fixed left-4 right-4 lg:left-80 lg:right-8 z-40 transition-all duration-300",
-                isExpanded ? "bottom-[84px] lg:bottom-4 lg:shadow-[0_-20px_40px_-15px_rgba(0,0,0,0.1)]" : "bottom-20 lg:bottom-4"
+                isExpanded ? "bottom-[84px] lg:bottom-4" : "bottom-20 lg:bottom-4"
             )}>
                 {/* Expanded Cart Detail */}
                 {isExpanded && (
-                    <div className="bg-white dark:bg-zinc-900 border rounded-t-2xl shadow-2xl overflow-hidden animate-in slide-in-from-bottom-5 mb-0 pb-4">
+                    <div className="bg-card border rounded-t-lg shadow-2xl overflow-hidden animate-in slide-in-from-bottom-5 mb-0 pb-4">
                         <div className="p-4 border-b flex items-center justify-between bg-zinc-50 dark:bg-zinc-800/50">
                             <h3 className="font-bold text-sm">Pesanan Sekarang ({cart.length})</h3>
                             <button
@@ -95,33 +95,38 @@ export default function CartBar({ isDemoMode = false, onCheckout }: CartBarProps
 
                 {/* Main Bar */}
                 <div className={cn(
-                    "flex items-center gap-4 bg-zinc-900 dark:bg-zinc-50 text-white dark:text-zinc-900 p-3 md:p-4 shadow-xl transition-all duration-300",
-                    isExpanded ? "rounded-b-2xl" : "rounded-2xl"
+                    "flex items-center gap-4 bg-zinc-900 dark:bg-zinc-50 text-white dark:text-zinc-900 p-2 md:p-3 shadow-2xl transition-all duration-300",
+                    isExpanded ? "rounded-b-lg" : "rounded-lg"
                 )}>
                     <button
                         onClick={() => setIsExpanded(!isExpanded)}
-                        className="flex items-center gap-3 flex-1 text-left"
+                        className="flex items-center gap-3 flex-1 text-left px-2"
                     >
                         <div className="relative">
-                            <div className="h-10 w-10 md:h-12 md:w-12 rounded-xl bg-emerald-600 flex items-center justify-center text-white">
-                                <LucideShoppingBag className="h-5 w-5 md:h-6 md:w-6" />
+                            <div className="h-10 w-10 rounded-md bg-zinc-800 dark:bg-zinc-200 flex items-center justify-center text-white dark:text-zinc-900 border border-white/10">
+                                <LucideShoppingBag className="h-5 w-5" />
                             </div>
-                            <span className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-red-500 border-2 border-zinc-900 flex items-center justify-center text-[10px] font-black">
+                            <span className="absolute -top-1.5 -right-1.5 h-5 w-5 rounded-full bg-zinc-100 dark:bg-zinc-900 border-2 border-zinc-900 dark:border-zinc-50 flex items-center justify-center text-[10px] font-black text-zinc-900 dark:text-zinc-100 shadow-sm">
                                 {cart.reduce((s, i) => s + i.quantity, 0)}
                             </span>
                         </div>
                         <div className="flex flex-col">
-                            <span className="text-[10px] font-bold opacity-70 uppercase tracking-widest leading-none mb-1">Total Pembayaran</span>
-                            <span className="text-lg md:text-xl font-black leading-none">Rp {total.toLocaleString('id-ID')}</span>
+                            <span className="text-[10px] font-bold opacity-50 uppercase tracking-widest leading-none mb-1">Total Order</span>
+                            <div className="flex items-center gap-2">
+                                <span className="text-base md:text-lg font-bold leading-none">Rp {total.toLocaleString('id-ID')}</span>
+                                {subtotal > total && (
+                                    <span className="text-[10px] font-bold text-red-400 bg-red-400/10 px-1 rounded">-{((subtotal - total) / subtotal * 100).toFixed(0)}%</span>
+                                )}
+                            </div>
                         </div>
-                        {isExpanded ? <LucideChevronDown className="h-5 w-5 ml-2 opacity-50" /> : <LucideChevronUp className="h-5 w-5 ml-2 opacity-50" />}
+                        {isExpanded ? <LucideChevronDown className="h-4 w-4 ml-2 opacity-50" /> : <LucideChevronUp className="h-4 w-4 ml-2 opacity-50" />}
                     </button>
 
                     <button
                         onClick={onCheckout}
-                        className="h-10 md:h-12 px-6 md:px-8 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-sm md:text-base shadow-lg shadow-emerald-900/20 active:scale-95 transition-all flex items-center justify-center gap-2"
+                        className="h-10 md:h-11 px-6 md:px-8 rounded-md bg-zinc-50 dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 font-bold text-sm shadow-sm hover:opacity-90 active:scale-95 transition-all flex items-center justify-center gap-2"
                     >
-                        Bayar <LucideCreditCard className="h-4 w-4 md:h-5 md:w-5" />
+                        Checkout <LucideCreditCard className="h-4 w-4" />
                     </button>
                 </div>
             </div>

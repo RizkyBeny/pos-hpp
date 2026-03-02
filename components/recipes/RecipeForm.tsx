@@ -390,14 +390,14 @@ export default function RecipeForm({ availableIngredients, isDemoMode = false }:
                                     </div>
 
                                     <div className="pt-4 mt-2 border-t border-dashed">
-                                        <label className="flex items-center gap-3 p-3 rounded-lg border bg-emerald-50/50 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-800 cursor-pointer hover:bg-emerald-50 dark:hover:bg-emerald-950/30 transition-colors">
+                                        <label className="flex items-center gap-3 p-3 rounded-lg border bg-secondary/50 border-border cursor-pointer hover:bg-secondary transition-colors">
                                             <div className="flex-1">
-                                                <p className="text-sm font-bold text-emerald-900 dark:text-emerald-100">Tampilkan di Menu Kasir</p>
-                                                <p className="text-[10px] text-emerald-700/70 dark:text-emerald-300/50">Menu ini akan muncul secara otomatis di halaman POS</p>
+                                                <p className="text-sm font-bold">Tampilkan di Menu Kasir</p>
+                                                <p className="text-[10px] text-muted-foreground">Menu ini akan muncul secara otomatis di halaman POS</p>
                                             </div>
                                             <input
                                                 type="checkbox"
-                                                className="h-5 w-5 rounded border-zinc-300 text-emerald-600 focus:ring-emerald-600 cursor-pointer"
+                                                className="h-5 w-5 rounded border-input text-foreground focus:ring-ring cursor-pointer"
                                                 checked={isMenuItem}
                                                 onChange={e => setIsMenuItem(e.target.checked)}
                                             />

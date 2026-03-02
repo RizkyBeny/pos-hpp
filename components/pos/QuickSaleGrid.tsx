@@ -143,38 +143,45 @@ export default function QuickSaleGrid({ isDemoMode = false }: { isDemoMode?: boo
 
     if (loading) {
         return (
-            <div className="flex flex-col items-center justify-center h-64 animate-pulse">
-                <div className="h-4 w-4 rounded-full bg-emerald-500 animate-ping mb-4"></div>
-                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">Memuat Menu...</p>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 animate-in fade-in duration-500">
+                {[...Array(8)].map((_, i) => (
+                    <div key={i} className="rounded-xl border bg-card p-3 space-y-3">
+                        <div className="aspect-square w-full rounded-lg bg-zinc-100 dark:bg-zinc-800 animate-pulse" />
+                        <div className="space-y-2">
+                            <div className="h-4 w-3/4 rounded bg-zinc-100 dark:bg-zinc-800 animate-pulse" />
+                            <div className="h-3 w-1/2 rounded bg-zinc-100 dark:bg-zinc-800 animate-pulse" />
+                        </div>
+                    </div>
+                ))}
             </div>
         );
     }
 
     return (
         <div className="space-y-4">
-            {/* Header POS */}
-            <div className="flex flex-col gap-4">
-                <div className="relative">
+            {/* Filters Section */}
+            <div className="flex flex-col sm:flex-row gap-2">
+                <div className="relative flex-1">
                     <LucideSearch className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
                     <input
                         type="text"
                         placeholder="Cari menu..."
-                        className="w-full bg-white dark:bg-zinc-900 border rounded-xl py-3 pl-10 pr-4 text-sm focus:ring-2 focus:ring-emerald-500 outline-none transition-all"
+                        className="w-full bg-background border rounded-md h-10 pl-10 pr-4 text-sm focus-visible:ring-1 focus-visible:ring-ring transition-all outline-none"
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
                     />
                 </div>
 
-                <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
+                <div className="flex p-1 bg-zinc-100 dark:bg-zinc-800/50 rounded-md w-fit">
                     {['All', 'Makanan', 'Minuman'].map((cat) => (
                         <button
                             key={cat}
                             onClick={() => setSelectedCategory(cat as any)}
                             className={cn(
-                                "px-4 py-2 rounded-lg text-xs font-bold transition-all whitespace-nowrap border",
+                                "px-3 py-1.5 rounded-sm text-xs font-bold transition-all whitespace-nowrap",
                                 selectedCategory === cat
-                                    ? "bg-emerald-600 text-white border-emerald-600 shadow-sm"
-                                    : "bg-white dark:bg-zinc-900 text-zinc-500 border-transparent hover:border-zinc-200"
+                                    ? "bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-50 shadow-sm"
+                                    : "text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100"
                             )}
                         >
                             {cat}
@@ -193,7 +200,7 @@ export default function QuickSaleGrid({ isDemoMode = false }: { isDemoMode?: boo
                     <p className="text-xs text-zinc-400 mt-1">Coba kata kunci lain atau pilih kategori berbeda.</p>
                 </div>
             ) : (
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                     {filteredRecipes.map((recipe) => {
                         const hppPerUnit = recipe.total_hpp / recipe.portions;
                         const sellingPrice = Math.ceil(hppPerUnit * (1 + recipe.margin_percentage / 100) / 100) * 100;
@@ -202,29 +209,33 @@ export default function QuickSaleGrid({ isDemoMode = false }: { isDemoMode?: boo
                             <div
                                 key={recipe.id}
                                 onClick={() => handleAddToCart(recipe)}
-                                className="group relative bg-white dark:bg-zinc-900 border rounded-xl p-3 cursor-pointer hover:border-emerald-500 hover:shadow-md transition-all active:scale-[0.98]"
+                                className="group relative bg-card border rounded-lg overflow-hidden cursor-pointer hover:shadow-md transition-all active:scale-[0.98]"
                             >
-                                <div className="aspect-square bg-zinc-50 dark:bg-zinc-800 rounded-lg flex items-center justify-center mb-3 relative overflow-hidden">
+                                <div className="aspect-square bg-muted flex items-center justify-center relative overflow-hidden">
                                     {recipe.image ? (
-                                        <img src={recipe.image} alt={recipe.name} className="h-full w-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                                        <img src={recipe.image} alt={recipe.name} className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
                                     ) : (
-                                        recipe.category === 'Makanan'
-                                            ? <LucideUtensils className="h-8 w-8 text-zinc-300 group-hover:scale-110 transition-transform" />
-                                            : <LucideCoffee className="h-8 w-8 text-zinc-300 group-hover:scale-110 transition-transform" />
+                                        <div className="text-muted-foreground/30">
+                                            {recipe.category === 'Makanan'
+                                                ? <LucideUtensils className="h-10 w-10" />
+                                                : <LucideCoffee className="h-10 w-10" />
+                                            }
+                                        </div>
                                     )}
-                                    <div className="absolute inset-0 bg-emerald-600/0 group-hover:bg-emerald-600/5 transition-colors"></div>
+                                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors"></div>
+
+                                    <div className="absolute bottom-2 right-2 h-8 w-8 rounded-full bg-white dark:bg-zinc-950 shadow-sm flex items-center justify-center text-zinc-900 dark:text-zinc-50 opacity-0 group-hover:opacity-100 transform translate-y-2 group-hover:translate-y-0 transition-all duration-300">
+                                        <LucidePlus className="h-4 w-4" />
+                                    </div>
                                 </div>
 
-                                <div className="space-y-1">
-                                    <h4 className="text-sm font-bold truncate group-hover:text-emerald-600 transition-colors">{recipe.name}</h4>
-                                    <div className="flex items-center justify-between">
-                                        <p className="text-[10px] text-zinc-400">{recipe.category}</p>
-                                        <div className="h-6 w-6 rounded-full bg-emerald-50 dark:bg-emerald-950 flex items-center justify-center text-emerald-600">
-                                            <LucidePlus className="h-3.5 w-3.5" />
-                                        </div>
+                                <div className="p-3 space-y-1.5">
+                                    <div className="flex flex-col">
+                                        <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-tight">{recipe.category}</span>
+                                        <h4 className="text-sm font-bold truncate leading-tight">{recipe.name}</h4>
                                     </div>
-                                    <p className="text-xs font-black text-emerald-600 dark:text-emerald-400 mt-1">
-                                        Rp {sellingPrice.toLocaleString('id-ID')}
+                                    <p className="text-sm font-black text-zinc-900 dark:text-zinc-50">
+                                        RP {sellingPrice.toLocaleString('id-ID')}
                                     </p>
                                 </div>
                             </div>

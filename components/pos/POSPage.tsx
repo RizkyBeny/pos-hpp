@@ -25,51 +25,51 @@ export default function POSPage({ isDemoMode = false }: POSPageProps) {
             "flex flex-col h-full space-y-6 animate-in fade-in duration-500",
             mode === 'walk-in' ? "pb-32" : "pb-12"
         )}>
-            {/* POS Header Section */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div>
-                    <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">Kasir (POS)</h2>
-                    <p className="text-sm text-muted-foreground font-medium">Klik menu untuk menambah pesanan</p>
+            {/* Header Section */}
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+                <div className="space-y-1">
+                    <h2 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50">Kasir</h2>
+                    <p className="text-sm text-zinc-500 font-medium">Pilih menu untuk mulai transaksi</p>
                 </div>
 
-                {/* Mode Selector Tabs */}
+                {/* Mode Selector - Shadcn style tabs */}
                 {mode !== 'checkout' && (
-                    <div className="flex p-1 bg-zinc-100 dark:bg-zinc-800/50 rounded-xl overflow-x-auto no-scrollbar">
+                    <div className="inline-flex h-10 items-center justify-center rounded-md bg-zinc-100 p-1 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400 w-fit">
                         <button
                             onClick={() => setMode('walk-in')}
                             className={cn(
-                                "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all whitespace-nowrap",
+                                "inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-xs font-bold ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
                                 mode === 'walk-in'
-                                    ? "bg-white dark:bg-zinc-900 text-emerald-600 shadow-sm"
-                                    : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
+                                    ? "bg-white text-zinc-950 shadow-sm dark:bg-zinc-900 dark:text-zinc-50"
+                                    : "hover:bg-zinc-200/50 dark:hover:bg-zinc-700/50"
                             )}
                         >
-                            <LucideStore className="h-4 w-4" />
+                            <LucideStore className="h-3.5 w-3.5 mr-2 opacity-70" />
                             Walk-in
                         </button>
                         <button
                             onClick={() => setMode('whatsapp')}
                             className={cn(
-                                "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all whitespace-nowrap",
+                                "inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-xs font-bold ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
                                 mode === 'whatsapp'
-                                    ? "bg-white dark:bg-zinc-900 text-emerald-600 shadow-sm"
-                                    : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
+                                    ? "bg-white text-zinc-950 shadow-sm dark:bg-zinc-900 dark:text-zinc-50"
+                                    : "hover:bg-zinc-200/50 dark:hover:bg-zinc-700/50"
                             )}
                         >
-                            <LucideMessageCircle className="h-4 w-4" />
+                            <LucideMessageCircle className="h-3.5 w-3.5 mr-2 opacity-70" />
                             WhatsApp
                         </button>
                         <button
                             onClick={() => setMode('manual')}
                             className={cn(
-                                "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all whitespace-nowrap",
+                                "inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-xs font-bold ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
                                 mode === 'manual'
-                                    ? "bg-white dark:bg-zinc-900 text-emerald-600 shadow-sm"
-                                    : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
+                                    ? "bg-white text-zinc-950 shadow-sm dark:bg-zinc-900 dark:text-zinc-50"
+                                    : "hover:bg-zinc-200/50 dark:hover:bg-zinc-700/50"
                             )}
                         >
-                            <LucideFileEdit className="h-4 w-4" />
-                            Entry Manual
+                            <LucideFileEdit className="h-3.5 w-3.5 mr-2 opacity-70" />
+                            Manual
                         </button>
                     </div>
                 )}

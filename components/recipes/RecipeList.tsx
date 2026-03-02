@@ -219,7 +219,7 @@ export default function RecipeList({ onViewRecipe, availableIngredients, isDemoM
             <div className="hidden md:block w-full overflow-auto">
                 <table className="w-full caption-bottom text-sm">
                     <thead className="[&_tr]:border-b bg-muted/50">
-                        <tr className="border-b transition-colors text-[10px] font-black uppercase tracking-widest text-muted-foreground/70">
+                        <tr className="border-b transition-colors text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
                             <th className="h-10 px-4 text-left align-middle w-16">Foto</th>
                             <th className="h-10 px-4 text-left align-middle">Produk</th>
                             <th className="h-10 px-4 text-left align-middle">Kategori</th>
