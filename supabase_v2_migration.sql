@@ -4,6 +4,7 @@
 
 -- 1. EXTEND ingredients table
 ALTER TABLE ingredients
+  ADD COLUMN IF NOT EXISTS user_id           UUID REFERENCES auth.users(id) ON DELETE CASCADE,
   ADD COLUMN IF NOT EXISTS stock_quantity    DECIMAL(10,3),
   ADD COLUMN IF NOT EXISTS stock_unit        VARCHAR(20),
   ADD COLUMN IF NOT EXISTS min_stock_alert   DECIMAL(10,3),
